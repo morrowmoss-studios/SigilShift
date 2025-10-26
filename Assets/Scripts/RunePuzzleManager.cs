@@ -77,7 +77,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             enabled = false; return;
         }
 
-        // force backrefs so clicks reach us
+        // force backrefs so clicks reach 
         for (int i = 0; i < tiles.Length; i++)
         {
             if (!tiles[i]) { Debug.LogError($"[RunePuzzleManager] loader.tiles[{i}] is null."); enabled = false; return; }
