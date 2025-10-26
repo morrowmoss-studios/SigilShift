@@ -1263,7 +1263,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 5}
-  m_LocalScale: {x: 1.3, y: 1.3, z: 1.2}
+  m_LocalScale: {x: 1.42, y: 1.24, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 263144238}
@@ -1980,6 +1980,7 @@ MonoBehaviour:
   shadowColor: {r: 0, g: 0, b: 0, a: 0.35}
   shadowOffset: {x: 0, y: -0.04}
   shadowInsetPct: 0.02
+  tileScale: 0.9
 --- !u!1 &1854267261
 GameObject:
   m_ObjectHideFlags: 0

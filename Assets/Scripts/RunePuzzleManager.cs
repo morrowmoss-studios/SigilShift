@@ -373,31 +373,32 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     
     IEnumerator CoSolveGlow()
 {
-    // one container above the board
+    // container above the board
     var root = new GameObject("SolveGlow");
-    root.transform.SetParent(transform, worldPositionStays: true);
+    root.transform.SetParent(transform, worldPositionStays: true);   // world space!
 
-    // build overlay sprites that match each tile exactly
     var overlays = new List<SpriteRenderer>(tiles.Length);
-    for (int i = 0; i < tiles.Length; i++)
-    {
-        if (i == blankTileIndex) continue; // skip the empty slot
 
-        var tile = tiles[i];
-        var srcSR = tile.GetComponent<SpriteRenderer>();
+    // build overlays by SLOT so positions are deterministic
+    for (int slot = 0; slot < tiles.Length; slot++)
+    {
+        if (slot == blankTileIndex) continue;
+
+        var tile = tiles[slot];
+        var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
         if (!srcSR || !srcSR.sprite) continue;
 
-        var go = new GameObject($"Glow_{i}");
-        go.transform.SetParent(root.transform, worldPositionStays: false);
-        go.transform.position   = tile.transform.position;
-        go.transform.localScale = tile.transform.localScale;
+        var go = new GameObject($"Glow_{slot}");
+        go.transform.SetParent(root.transform, worldPositionStays: true);
+        go.transform.position   = slotWorldPos[slot];        // exact solved slot position
+        go.transform.localScale = tile.transform.localScale; // match tileScale perfectly
         go.transform.rotation   = tile.transform.rotation;
 
         var glowSR = go.AddComponent<SpriteRenderer>();
         glowSR.sprite = srcSR.sprite;
         glowSR.sortingLayerID = srcSR.sortingLayerID;
         glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
-        glowSR.material = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
+        glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
 
         var c = glowColor; c.a = 0f;
         glowSR.color = c;
@@ -405,35 +406,37 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         overlays.Add(glowSR);
     }
 
-    // animate alpha + a tiny scale swell
+    // animate alpha + tiny pulse (keep it subtle so pieces don't overlap)
+    float dur = Mathf.Max(0.05f, glowDuration);
+    float punch = Mathf.Clamp(glowScalePunch, 0f, 0.12f); // 0–0.12 plays nice with 0.70 tileScale
     float t = 0f;
-    while (t < glowDuration)
+
+    while (t < dur)
     {
         t += Time.deltaTime;
-        float u = Mathf.Clamp01(t / glowDuration);
+        float u = Mathf.Clamp01(t / dur);
 
-        // ease in/out + little pulse (up then down)
-        float a = Mathf.Sin(u * Mathf.PI);      // 0→1→0
-        float s = 1f + glowScalePunch * a;
+        // 0→1→0 curve
+        float a = Mathf.Sin(u * Mathf.PI);
+        float s = 1f + punch * a;
 
-        for (int k = 0; k < overlays.Count; k++)
+        for (int i = 0; i < overlays.Count; i++)
         {
-            var sr = overlays[k];
+            var sr = overlays[i];
             if (!sr) continue;
 
-            var col = sr.color; col.a = a;      // additive alpha
+            var col = sr.color; col.a = a;
             sr.color = col;
 
-            // scale around tile center
-            var tr = sr.transform;
-            tr.localScale = Vector3.one * s;
+            sr.transform.localScale = tiles[i >= blankTileIndex ? i + 1 : i].transform.localScale * s;
+            // ^ keeps base scale identical to its tile, then applies tiny pulse
         }
 
         yield return null;
     }
 
-    // cleanup
     if (root) Destroy(root);
 }
+
 
 }
