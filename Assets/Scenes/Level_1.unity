@@ -171,6 +171,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &184941272
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -322,6 +323,9 @@ MonoBehaviour:
   blankTileIndex: 8
   shuffleOnStart: 1
   shuffleSteps: 90
+  rotationEnabled: 1
+  rotationQuarterTurns: 4
+  randomizeRotationOnShuffle: 1
   slideClip: {fileID: 8300000, guid: cd5f960b12a714b71887730268b980af, type: 3}
   slideVolume: 0.7
   slidePitchJitter: {x: 0.96, y: 1.04}
@@ -418,6 +422,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &439962563
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -571,6 +576,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &489317944
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -895,6 +901,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &781707104
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1048,6 +1055,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &1293764894
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1375,6 +1383,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &1451235571
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1560,6 +1569,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &1561601248
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1814,6 +1824,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &1573204415
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1969,7 +1980,8 @@ MonoBehaviour:
   - {fileID: 1451235570}
   - {fileID: 781707103}
   - {fileID: 1573204414}
-  resourcePath: Sigils/Sigil_1
+  config: {fileID: 11400000, guid: e6ba95264acd641009977167b6209216, type: 2}
+  resourcePath: 
   tileMaterial: {fileID: 2100000, guid: f1bfb0e30f27d4b98b5dce21a159660c, type: 2}
   baseOrder: 100
   borderPct: 0.06
@@ -2033,6 +2045,7 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  rotationSteps: 0
 --- !u!61 &1854267264
 BoxCollider2D:
   m_ObjectHideFlags: 0

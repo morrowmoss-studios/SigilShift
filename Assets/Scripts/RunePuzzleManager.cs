@@ -20,21 +20,28 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [Tooltip("How many random valid moves to do when shuffling.")]
     public int shuffleSteps = 90;                  // ~10x tiles feels good
 
+    // ---------- NEW: Rotation options ----------
+    [Header("Rotation")]
+    [Tooltip("Allow tiles to rotate when clicked if not adjacent to the blank.")]
+    public bool rotationEnabled = true;
+
+    [Tooltip("How many 90° steps per full turn. 1 = disabled, 2 = 180° only, 4 = 90° steps.")]
+    [Range(1, 8)] public int rotationQuarterTurns = 4;
+
+    [Tooltip("Randomize tile rotations during Shuffle.")]
+    public bool randomizeRotationOnShuffle = true;
+
     // ---- internals ----
-    private RuneTile[] tiles;                      // tile index -> RuneTile (0..8)
-    private Vector3[] slotWorldPos;                // slot index -> world position (0..8)
+    private RuneTile[] tiles;                      // tile index -> RuneTile (0..N-1)
+    private Vector3[] slotWorldPos;                // slot index -> world position
 
     private int blankSlot;                         // current blank slot index
     private bool busy;
 
-    // live mapping
-    // slotToTile[s] = which tile index sits in slot s (blankSlot has blankTileIndex)
-    // tileToSlot[t] = which slot index tile t sits in
-    private int[] slotToTile;
-    private int[] tileToSlot;
+    private int[] slotToTile;                      // slot -> tile index (blankSlot stores blankTileIndex)
+    private int[] tileToSlot;                      // tile index -> slot
 
-    // history of moves (for autosolve); each entry is the tile index that moved into the blank
-    private Stack<int> undoStack = new Stack<int>();
+    private Stack<int> undoStack = new Stack<int>();   // history for autosolve
 
     // ----------  SFX  ----------
     [Header("SFX (Manager)")]
@@ -47,7 +54,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField, Range(0f,1f)] private float solvedVolume = 0.9f;
     [SerializeField] private Vector2 solvedPitchJitter = new(0.98f, 1.02f);
 
-    // --------- Solve Glow (overlay only the sigil paint) ----------
+    // --------- Solve Glow ----------
     [Header("Solve Glow")]
     [SerializeField] private Material additiveSpriteMaterial; // set to built-in "Particles/Additive"
     [SerializeField] private Color glowColor = new(1.0f, 0.95f, 0.65f, 1f);
@@ -77,12 +84,23 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             enabled = false; return;
         }
 
-        // force backrefs so clicks reach 
+        // force backrefs so clicks reach us
         for (int i = 0; i < tiles.Length; i++)
         {
             if (!tiles[i]) { Debug.LogError($"[RunePuzzleManager] loader.tiles[{i}] is null."); enabled = false; return; }
             tiles[i].manager = this;
         }
+
+        // ---------- NEW: pull rotation rules from loader.config if present ----------
+        if (loader && loader.config)
+        {
+            rotationEnabled      = loader.config.enableRotation;
+            rotationQuarterTurns = Mathf.Max(1, loader.config.quarterTurns);
+        }
+        // Initialize each tile’s rotation system (even if disabled, sets to 1 step = no rotation)
+        for (int i = 0; i < tiles.Length; i++)
+            tiles[i].InitRotationSystem(rotationEnabled ? rotationQuarterTurns : 1);
+        // ---------------------------------------------------------------------------
 
         _audio = GetComponent<AudioSource>();
         if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
@@ -146,7 +164,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         if (tileIdx < 0) return;
 
         int tileSlot = tileToSlot[tileIdx];
-        if (!IsAdjacent(tileSlot, blankSlot)) return;
+
+        // ---------- NEW: click-to-rotate if not adjacent ----------
+        if (!IsAdjacent(tileSlot, blankSlot))
+        {
+            if (rotationEnabled && rotationQuarterTurns > 1)
+            {
+                tile.RotateOnce();
+            }
+            return;
+        }
+        // ----------------------------------------------------------
 
         busy = true;
         Vector3 target = slotWorldPos[blankSlot];
@@ -181,6 +209,9 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             UpdateTileLogicalIndex(tiles[tileIdx], slot);
             slotToTile[slot] = tileIdx;
             tileToSlot[tileIdx] = slot;
+
+            // also reset rotation visuals
+            tiles[tileIdx].InitRotationSystem(rotationEnabled ? rotationQuarterTurns : 1);
         }
 
         blankSlot = blankTileIndex;
@@ -208,7 +239,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             int chosenSlot = -1;
             if (neigh.Count > 1 && lastMovedTile >= 0)
             {
-                // try to avoid selecting the tile we just moved
                 List<int> candidates = new List<int>(neigh);
                 candidates.RemoveAll(s => slotToTile[s] == lastMovedTile);
                 if (candidates.Count > 0)
@@ -225,6 +255,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             lastMovedTile = tileIdx;
         }
 
+        // ---------- NEW: optionally randomize rotation after shuffling ----------
+        if (rotationEnabled && rotationQuarterTurns > 1 && randomizeRotationOnShuffle)
+        {
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                if (i == blankTileIndex) continue;
+                int turns = rng.Next(rotationQuarterTurns);   // 0..quarterTurns-1
+                tiles[i].rotationSteps = 0;
+                for (int r = 0; r < turns; r++) tiles[i].RotateOnce();
+            }
+        }
         // keep blank hidden after shuffle
         ApplyBlankVisualState(hide: true);
     }
@@ -242,25 +283,24 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         // We recorded a valid path during Shuffle. Rewind it:
         while (undoStack.Count > 0)
         {
-            int tileIdx = undoStack.Pop(); // the tile that previously moved INTO the blank
+            int tileIdx = undoStack.Pop();
             RuneTile tile = tiles[tileIdx];
 
             Vector3 target = slotWorldPos[blankSlot];
             bool done = false;
             tile.SlideTo(target, () =>
             {
-                CommitMove(tileIdx, oldSlot: tileToSlot[tileIdx] /* value before commit */, pushHistory: false);
+                CommitMove(tileIdx, oldSlot: tileToSlot[tileIdx], pushHistory: false);
                 PlaySlideSfx();
                 done = true;
             });
 
-            // wait for the slide to finish
             while (!done) yield return null;
             if (stepDelay > 0f) yield return new WaitForSeconds(stepDelay);
         }
 
         busy = false;
-        OnSolved(); // make sure chime fires even if we were already solved
+        OnSolved();
     }
 
     // ===============================
@@ -308,7 +348,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         tile.currentPos = new Vector2Int(c, r);
     }
 
-    // commit a move where tileIdx goes into the current blankSlot
     void CommitMove(int tileIdx, int oldSlot, bool pushHistory)
     {
         // mapping
@@ -328,7 +367,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         blankSlot = oldSlot;
     }
 
-    // instant move used for shuffle
     void MoveTileIntoBlank_Instant(int tileIdx, bool pushHistory)
     {
         int fromSlot = tileToSlot[tileIdx];
@@ -338,7 +376,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
     bool IsSolved()
     {
-        // solved when tile index == slot index for all non-blank
         for (int slot = 0; slot < tiles.Length; slot++)
         {
             if (slot == blankSlot) continue;
@@ -354,7 +391,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         StartCoroutine(CoSolveGlow());
     }
 
-    // ---------- SFX ----------
     void PlaySlideSfx()
     {
         if (!_audio || !slideClip) return;
@@ -370,73 +406,66 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _audio.PlayOneShot(solvedClip, solvedVolume);
         _audio.pitch = 1f;
     }
-    
+
     IEnumerator CoSolveGlow()
-{
-    // container above the board
-    var root = new GameObject("SolveGlow");
-    root.transform.SetParent(transform, worldPositionStays: true);   // world space!
-
-    var overlays = new List<SpriteRenderer>(tiles.Length);
-
-    // build overlays by SLOT so positions are deterministic
-    for (int slot = 0; slot < tiles.Length; slot++)
     {
-        if (slot == blankTileIndex) continue;
+        var root = new GameObject("SolveGlow");
+        root.transform.SetParent(transform, worldPositionStays: true);
 
-        var tile = tiles[slot];
-        var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
-        if (!srcSR || !srcSR.sprite) continue;
+        var overlays = new List<SpriteRenderer>(tiles.Length);
 
-        var go = new GameObject($"Glow_{slot}");
-        go.transform.SetParent(root.transform, worldPositionStays: true);
-        go.transform.position   = slotWorldPos[slot];        // exact solved slot position
-        go.transform.localScale = tile.transform.localScale; // match tileScale perfectly
-        go.transform.rotation   = tile.transform.rotation;
-
-        var glowSR = go.AddComponent<SpriteRenderer>();
-        glowSR.sprite = srcSR.sprite;
-        glowSR.sortingLayerID = srcSR.sortingLayerID;
-        glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
-        glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
-
-        var c = glowColor; c.a = 0f;
-        glowSR.color = c;
-
-        overlays.Add(glowSR);
-    }
-
-    // animate alpha + tiny pulse (keep it subtle so pieces don't overlap)
-    float dur = Mathf.Max(0.05f, glowDuration);
-    float punch = Mathf.Clamp(glowScalePunch, 0f, 0.12f); // 0–0.12 plays nice with 0.70 tileScale
-    float t = 0f;
-
-    while (t < dur)
-    {
-        t += Time.deltaTime;
-        float u = Mathf.Clamp01(t / dur);
-
-        // 0→1→0 curve
-        float a = Mathf.Sin(u * Mathf.PI);
-        float s = 1f + punch * a;
-
-        for (int i = 0; i < overlays.Count; i++)
+        for (int slot = 0; slot < tiles.Length; slot++)
         {
-            var sr = overlays[i];
-            if (!sr) continue;
+            if (slot == blankTileIndex) continue;
 
-            var col = sr.color; col.a = a;
-            sr.color = col;
+            var tile = tiles[slot];
+            var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
+            if (!srcSR || !srcSR.sprite) continue;
 
-            sr.transform.localScale = tiles[i >= blankTileIndex ? i + 1 : i].transform.localScale * s;
-            // ^ keeps base scale identical to its tile, then applies tiny pulse
+            var go = new GameObject($"Glow_{slot}");
+            go.transform.SetParent(root.transform, worldPositionStays: true);
+            go.transform.position   = slotWorldPos[slot];
+            go.transform.localScale = tile.transform.localScale;
+            go.transform.rotation   = tile.transform.rotation;
+
+            var glowSR = go.AddComponent<SpriteRenderer>();
+            glowSR.sprite = srcSR.sprite;
+            glowSR.sortingLayerID = srcSR.sortingLayerID;
+            glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
+            glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
+
+            var c = glowColor; c.a = 0f;
+            glowSR.color = c;
+
+            overlays.Add(glowSR);
         }
 
-        yield return null;
+        float dur = Mathf.Max(0.05f, glowDuration);
+        float punch = Mathf.Clamp(glowScalePunch, 0f, 0.12f);
+        float t = 0f;
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float u = Mathf.Clamp01(t / dur);
+            float a = Mathf.Sin(u * Mathf.PI);     // 0→1→0
+            float s = 1f + punch * a;
+
+            for (int i = 0; i < overlays.Count; i++)
+            {
+                var sr = overlays[i];
+                if (!sr) continue;
+
+                var col = sr.color; col.a = a;
+                sr.color = col;
+
+                // keep base scale identical to its tile, then apply tiny pulse
+                sr.transform.localScale = sr.transform.localScale.normalized * s;
+            }
+
+            yield return null;
+        }
+
+        if (root) Destroy(root);
     }
-
-    if (root) Destroy(root);
-}
-
-
 }

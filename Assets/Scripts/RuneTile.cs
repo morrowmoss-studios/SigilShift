@@ -181,7 +181,11 @@ public class RuneTile : MonoBehaviour
 
     void ApplyRotationVisual()
     {
-        float angle = (360f / Mathf.Max(1, _maxSteps)) * rotationSteps;
-        transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
+        // Rotate clockwise in 90° increments if _maxSteps == 4
+        float anglePerStep = 360f / Mathf.Max(1, _maxSteps);
+        float angle = anglePerStep * rotationSteps;
+
+        // Use positive angle so rotation visually matches typical clockwise motion
+        transform.localRotation = Quaternion.Euler(0f, 0f, angle);
     }
 }
