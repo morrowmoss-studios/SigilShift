@@ -156,7 +156,10 @@ public class RuneTile : MonoBehaviour
         _audio.PlayOneShot(tapClip, tapVolume);
         _audio.pitch = 1f;
     }
-    
+
+    // -----------------------
+    // Rotation support
+    // -----------------------
     [HideInInspector] public int rotationSteps;  // 0..(quarterTurns-1)
     int _maxSteps = 4;
 
@@ -174,9 +177,11 @@ public class RuneTile : MonoBehaviour
         ApplyRotationVisual();
     }
 
+    public int GetMaxSteps() => _maxSteps;
+
     void ApplyRotationVisual()
     {
-        float angle = (360f / _maxSteps) * rotationSteps;
+        float angle = (360f / Mathf.Max(1, _maxSteps)) * rotationSteps;
         transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
     }
 }
