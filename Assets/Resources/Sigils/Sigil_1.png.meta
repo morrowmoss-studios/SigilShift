@@ -24,7 +24,7 @@ TextureImporter:
     heightScale: 0.25
     normalMapFilter: 0
     flipGreenChannel: 0
-  isReadable: 0
+  isReadable: 1
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
@@ -143,9 +143,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 683
-        width: 341
-        height: 341
+        y: 0
+        width: 1024
+        height: 1024
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -156,182 +156,6 @@ TextureImporter:
       bones: []
       spriteID: 239d4cca526e6f270800000000000000
       internalID: 8284061614081366322
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_1
-      rect:
-        serializedVersion: 2
-        x: 341
-        y: 683
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: bc4324cec3eaa49da820ba98244da922
-      internalID: -2078906757
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_2
-      rect:
-        serializedVersion: 2
-        x: 682
-        y: 683
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3d2eae05a9751436baf4babbe0b20977
-      internalID: -1741794188
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_3
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 342
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9e23cee7de8c14cc6ac064287f39e8b6
-      internalID: 2116504081
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_4
-      rect:
-        serializedVersion: 2
-        x: 341
-        y: 342
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 21b61ff7b29fa4de797d3c508c2c89c7
-      internalID: 289366490
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_5
-      rect:
-        serializedVersion: 2
-        x: 682
-        y: 342
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2b4aee08397014fc7874dc53c4490841
-      internalID: -1491827818
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_6
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 1
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: aa6188f81323444c39ae49961f7124f3
-      internalID: 133216485
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_7
-      rect:
-        serializedVersion: 2
-        x: 341
-        y: 1
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6bc7455ecffe6448a87da0bc6b0b5cc4
-      internalID: -852440410
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sigil_1_8
-      rect:
-        serializedVersion: 2
-        x: 682
-        y: 1
-        width: 341
-        height: 341
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: a0e799e7fbd2c45ddb7c57ef78d4139b
-      internalID: 96393555
       vertices: []
       indices: 
       edges: []
@@ -350,17 +174,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":3.0},"gridSpriteSize":{"x":341.0,"y":341.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":1024.0,"y":1024.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Sigil_1_0: 8284061614081366322
-      Sigil_1_1: -2078906757
-      Sigil_1_2: -1741794188
-      Sigil_1_3: 2116504081
-      Sigil_1_4: 289366490
-      Sigil_1_5: -1491827818
-      Sigil_1_6: 133216485
-      Sigil_1_7: -852440410
-      Sigil_1_8: 96393555
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

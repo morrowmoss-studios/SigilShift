@@ -156,4 +156,27 @@ public class RuneTile : MonoBehaviour
         _audio.PlayOneShot(tapClip, tapVolume);
         _audio.pitch = 1f;
     }
+    
+    [HideInInspector] public int rotationSteps;  // 0..(quarterTurns-1)
+    int _maxSteps = 4;
+
+    public void InitRotationSystem(int quarterTurns)
+    {
+        _maxSteps = Mathf.Max(1, quarterTurns);
+        rotationSteps = 0;
+        ApplyRotationVisual();
+    }
+
+    public void RotateOnce()
+    {
+        if (_maxSteps <= 1) return;
+        rotationSteps = (rotationSteps + 1) % _maxSteps;
+        ApplyRotationVisual();
+    }
+
+    void ApplyRotationVisual()
+    {
+        float angle = (360f / _maxSteps) * rotationSteps;
+        transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
+    }
 }

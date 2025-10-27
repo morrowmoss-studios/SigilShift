@@ -5,7 +5,8 @@ public class RuneBoardLoader : MonoBehaviour
 {
     [Header("Tiles (TL → BR)")]
     public RuneTile[] tiles = new RuneTile[9];
-
+    public LevelConfig config;           // assign per scene or from a LevelLoade
+    
     [Header("Rune Slice Source (Resources)")]
     public string resourcePath = "Sigils/MorrowMossRune";
 
@@ -27,7 +28,7 @@ public class RuneBoardLoader : MonoBehaviour
 
     [Header("Size")]
     [Range(0.5f, 1.5f)] public float tileScale = 0.90f; // 1=original, <1 smaller
-
+    
     void Start()
     {
         var slices = Resources.LoadAll<Sprite>(resourcePath);
@@ -58,6 +59,10 @@ public class RuneBoardLoader : MonoBehaviour
             -totalW * 0.5f + tileWorld.x * 0.5f,
              totalH * 0.5f - tileWorld.y * 0.5f,
             0f);
+        
+        int rows = config.rows, cols = config.cols;
+        var sprites = RuntimeSlicer.Slice(config.sourceTexture, rows, cols);
+        float scale = config.tileScale;
 
         for (int i = 0; i < tiles.Length; i++)
         {
