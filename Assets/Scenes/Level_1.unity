@@ -326,6 +326,9 @@ MonoBehaviour:
   rotationEnabled: 1
   rotationQuarterTurns: 4
   randomizeRotationOnShuffle: 1
+  fixRotationsOnAutoSolve: 1
+  autoSolveTargetRotationStep: 0
+  autosolveRotationPause: 0.05
   slideClip: {fileID: 8300000, guid: cd5f960b12a714b71887730268b980af, type: 3}
   slideVolume: 0.7
   slidePitchJitter: {x: 0.96, y: 1.04}
@@ -335,8 +338,22 @@ MonoBehaviour:
   additiveSpriteMaterial: {fileID: 0}
   glowColor: {r: 1, g: 0.95, b: 0.65, a: 1}
   glowDuration: 1.4
-  glowScalePunch: 0.06
-  glowOrderBoost: 10
+  glowScalePunch: 0.0533
+  glowOrderBoost: 25
+  glowBaseScale: 0.94
+  glowMaxAlpha: 0.956
+  glowScaleCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  glowAlphaCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &263144237
 GameObject:
   m_ObjectHideFlags: 0
