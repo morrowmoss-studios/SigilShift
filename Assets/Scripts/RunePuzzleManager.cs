@@ -31,6 +31,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [Tooltip("Randomize tile rotations during Shuffle.")]
     public bool randomizeRotationOnShuffle = true;
 
+    // ---------- NEW: Autosolve rotation correction ----------
+    [Header("Autosolve")]
+    [Tooltip("When AutoSolve runs, snap all tiles to this rotation step before sliding back.")]
+    public bool fixRotationsOnAutoSolve = true;
+
+    [Tooltip("Which rotation step counts as 'upright' for autosolve (usually 0).")]
+    [Range(0, 7)] public int autoSolveTargetRotationStep = 0;
+
+    [Tooltip("Pause after snapping rotations (seconds). 0 = no pause.")]
+    [Range(0f, 0.5f)] public float autosolveRotationPause = 0.05f;
+
     // ---- internals ----
     private RuneTile[] tiles;                      // tile index -> RuneTile (0..N-1)
     private Vector3[] slotWorldPos;                // slot index -> world position
@@ -61,6 +72,13 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField, Range(0.1f, 5f)] private float glowDuration = 1.4f;
     [SerializeField, Range(0f, 0.2f)] private float glowScalePunch = 0.06f; // subtle swell
     [SerializeField] private int glowOrderBoost = 10; // render above tiles
+    [SerializeField, Range(0.8f, 1.5f)] float glowBaseScale = 1.02f;   // overall size vs tile
+    [SerializeField, Range(0f, 1f)]     float glowMaxAlpha  = 1f;      // cap brightness
+    [SerializeField] AnimationCurve glowScaleCurve = null;              // time -> 0..1
+    [SerializeField] AnimationCurve glowAlphaCurve = null;              // time -> 0..1
+
+// keep your existing glowScalePunch; it’s the amplitude
+
     
     private AudioSource _audio;
 
@@ -91,16 +109,15 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             tiles[i].manager = this;
         }
 
-        // ---------- NEW: pull rotation rules from loader.config if present ----------
+        // pull rotation rules from loader.config if present
         if (loader && loader.config)
         {
             rotationEnabled      = loader.config.enableRotation;
             rotationQuarterTurns = Mathf.Max(1, loader.config.quarterTurns);
         }
-        // Initialize each tile’s rotation system (even if disabled, sets to 1 step = no rotation)
+        // Initialize each tile’s rotation system
         for (int i = 0; i < tiles.Length; i++)
             tiles[i].InitRotationSystem(rotationEnabled ? rotationQuarterTurns : 1);
-        // ---------------------------------------------------------------------------
 
         _audio = GetComponent<AudioSource>();
         if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
@@ -109,7 +126,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _audio.spatialBlend = 0f; // 2D
     }
 
-    // wait a frame so RuneBoardLoader.Start() finishes laying out tiles
     IEnumerator Start()
     {
         yield return null;
@@ -159,7 +175,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             {
                 if (!tile) continue;
 
-                // If rotation is disabled this will be 1; SetRotationSteps will snap to 0.
                 int max = Mathf.Max(1, tile.MaxRotationSteps);
                 int step = rng.Next(0, max);
                 tile.SetRotationSteps(step);
@@ -167,8 +182,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
             Debug.Log("🔄 Randomized tile rotations");
         }
-
-
     }
 
     // ===============================
@@ -183,7 +196,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         int tileSlot = tileToSlot[tileIdx];
 
-        // ---------- NEW: click-to-rotate if not adjacent ----------
+        // click-to-rotate if not adjacent
         if (!IsAdjacent(tileSlot, blankSlot))
         {
             if (rotationEnabled && rotationQuarterTurns > 1)
@@ -192,7 +205,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             }
             return;
         }
-        // ----------------------------------------------------------
 
         busy = true;
         Vector3 target = slotWorldPos[blankSlot];
@@ -273,7 +285,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             lastMovedTile = tileIdx;
         }
 
-        // ---------- NEW: optionally randomize rotation after shuffling ----------
+        // optionally randomize rotation after shuffling
         if (rotationEnabled && rotationQuarterTurns > 1 && randomizeRotationOnShuffle)
         {
             for (int i = 0; i < tiles.Length; i++)
@@ -298,7 +310,32 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     {
         busy = true;
 
-        // We recorded a valid path during Shuffle. Rewind it:
+        // 0) NEW: snap rotations before sliding back via undoStack
+        if (fixRotationsOnAutoSolve)
+        {
+            int fixedCount = 0;
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                if (i == blankTileIndex) continue;
+
+                var t = tiles[i];
+                if (t && t.MaxRotationSteps > 1 && t.rotationSteps != autoSolveTargetRotationStep)
+                {
+                    t.SetRotationSteps(autoSolveTargetRotationStep); // instant, exact snap
+                    fixedCount++;
+                }
+            }
+
+            if (fixedCount > 0)
+            {
+                if (autosolveRotationPause > 0f)
+                    yield return new WaitForSeconds(autosolveRotationPause);
+
+                Debug.Log($"[AutoSolve] Fixed rotation on {fixedCount} tiles → proceeding to slide rewind.");
+            }
+        }
+
+        // 1) Rewind the recorded path from Shuffle (position solve)
         while (undoStack.Count > 0)
         {
             int tileIdx = undoStack.Pop();
@@ -426,64 +463,69 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     }
 
     IEnumerator CoSolveGlow()
+{
+    var root = new GameObject("SolveGlow");
+    root.transform.SetParent(transform, worldPositionStays: true);
+
+    var overlays = new List<(SpriteRenderer sr, Vector3 baseScale)>(tiles.Length);
+
+    for (int slot = 0; slot < tiles.Length; slot++)
     {
-        var root = new GameObject("SolveGlow");
-        root.transform.SetParent(transform, worldPositionStays: true);
+        if (slot == blankTileIndex) continue;
 
-        var overlays = new List<SpriteRenderer>(tiles.Length);
+        var tile  = tiles[slot];
+        var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
+        if (!srcSR || !srcSR.sprite) continue;
 
-        for (int slot = 0; slot < tiles.Length; slot++)
-        {
-            if (slot == blankTileIndex) continue;
+        var go = new GameObject($"Glow_{slot}");
+        go.transform.SetParent(root.transform, worldPositionStays: true);
+        go.transform.position = slotWorldPos[slot];
+        go.transform.rotation = tile.transform.rotation;
 
-            var tile = tiles[slot];
-            var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
-            if (!srcSR || !srcSR.sprite) continue;
+        var glowSR = go.AddComponent<SpriteRenderer>();
+        glowSR.sprite         = srcSR.sprite;
+        glowSR.sortingLayerID = srcSR.sortingLayerID;
+        glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
+        glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
 
-            var go = new GameObject($"Glow_{slot}");
-            go.transform.SetParent(root.transform, worldPositionStays: true);
-            go.transform.position   = slotWorldPos[slot];
-            go.transform.localScale = tile.transform.localScale;
-            go.transform.rotation   = tile.transform.rotation;
+        var c = glowColor; c.a = 0f;
+        glowSR.color = c;
 
-            var glowSR = go.AddComponent<SpriteRenderer>();
-            glowSR.sprite = srcSR.sprite;
-            glowSR.sortingLayerID = srcSR.sortingLayerID;
-            glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
-            glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
+        Vector3 baseScale = tile.transform.localScale;
+        go.transform.localScale = baseScale;
 
-            var c = glowColor; c.a = 0f;
-            glowSR.color = c;
-
-            overlays.Add(glowSR);
-        }
-
-        float dur = Mathf.Max(0.05f, glowDuration);
-        float punch = Mathf.Clamp(glowScalePunch, 0f, 0.12f);
-        float t = 0f;
-
-        while (t < dur)
-        {
-            t += Time.deltaTime;
-            float u = Mathf.Clamp01(t / dur);
-            float a = Mathf.Sin(u * Mathf.PI);     // 0→1→0
-            float s = 1f + punch * a;
-
-            for (int i = 0; i < overlays.Count; i++)
-            {
-                var sr = overlays[i];
-                if (!sr) continue;
-
-                var col = sr.color; col.a = a;
-                sr.color = col;
-
-                // keep base scale identical to its tile, then apply tiny pulse
-                sr.transform.localScale = sr.transform.localScale.normalized * s;
-            }
-
-            yield return null;
-        }
-
-        if (root) Destroy(root);
+        overlays.Add((glowSR, baseScale));
     }
+
+    float dur   = Mathf.Max(0.1f, glowDuration);
+    float punch = Mathf.Clamp(glowScalePunch, 0f, 0.3f); // clamp to 0.3x for safety
+    float t = 0f;
+
+    while (t < dur)
+    {
+        t += Time.deltaTime;
+        float u = Mathf.Clamp01(t / dur);
+
+        float a = Mathf.Sin(u * Mathf.PI);   // alpha wave
+        float k = a * a;                     // smoother scale wave
+
+        // limit total swell so glow edges don't overlap too much
+        float s = Mathf.Min(1f + punch * k, 1.1f); // hard cap at 10% growth
+
+        foreach (var (sr, baseScale) in overlays)
+        {
+            if (!sr) continue;
+
+            var col = sr.color;
+            col.a = glowColor.a * a;
+            sr.color = col;
+
+            sr.transform.localScale = baseScale * s;
+        }
+
+        yield return null;
+    }
+
+    if (root) Destroy(root);
+}
 }
