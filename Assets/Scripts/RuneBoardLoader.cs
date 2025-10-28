@@ -122,6 +122,14 @@ public class RuneBoardLoader : MonoBehaviour
             t.correctPos = new Vector2Int(c, r);
             t.currentPos = t.correctPos;
             t.SetLabel(i);
+            
+            // rotation system init (respect config; 1 = no rotation)
+            int qTurns = 1;
+            if (config && config.enableRotation)
+                qTurns = Mathf.Max(1, config.quarterTurns);
+
+            t.InitRotationSystem(qTurns);
+            
 
             // rotation system init if manager uses it later
             if (config) t.InitRotationSystem(config.enableRotation ? Mathf.Max(1, config.quarterTurns) : 1);

@@ -151,6 +151,24 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         if (Input.GetKeyDown(KeyCode.R)) ResetToSolved();
         if (Input.GetKeyDown(KeyCode.S)) ShuffleRandomWalk(shuffleSteps);
         if (Input.GetKeyDown(KeyCode.A)) AutoSolve();   // rewind the shuffle
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            var rng = new System.Random();
+
+            foreach (var tile in loader.tiles)
+            {
+                if (!tile) continue;
+
+                // If rotation is disabled this will be 1; SetRotationSteps will snap to 0.
+                int max = Mathf.Max(1, tile.MaxRotationSteps);
+                int step = rng.Next(0, max);
+                tile.SetRotationSteps(step);
+            }
+
+            Debug.Log("🔄 Randomized tile rotations");
+        }
+
+
     }
 
     // ===============================

@@ -37,6 +37,9 @@ public class RuneTile : MonoBehaviour
     AudioSource _audio;
     int _lastTapFrame = -9999;
 
+    // ---- Click guard (prevents double firing from multiple input paths) ----
+    int _lastClickFrame = -9999;
+
     void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
@@ -44,10 +47,7 @@ public class RuneTile : MonoBehaviour
         if (_col != null) _col.isTrigger = false;
 
         // Try to auto-wire a manager from any parent that implements ISlidingPuzzle
-        if (manager == null)
-        {
-            manager = GetComponentInParent<ISlidingPuzzle>();
-        }
+        if (manager == null) manager = GetComponentInParent<ISlidingPuzzle>();
 
         // use parent's AudioSource if present, else add local
         _audio = GetComponentInParent<AudioSource>();
@@ -102,7 +102,7 @@ public class RuneTile : MonoBehaviour
             }
         }
 
-        // click-to-move (both input systems)
+        // unified click check (new input OR legacy)
         bool clicked = false;
         Vector2 screenPos = default;
 
@@ -122,34 +122,47 @@ public class RuneTile : MonoBehaviour
 
         if (clicked)
         {
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                Vector3 wp = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
-                Vector2 p2 = new Vector2(wp.x, wp.y);
-                var hit = Physics2D.OverlapPoint(p2);
-
-                if (hit != null && hit.gameObject == gameObject)
-                {
-                    PlayTap();                        // <- play immediately on touch/click
-                    manager?.TrySlideTile(this);
-                }
-            }
+            TryHandleClickAtScreenPos(screenPos);
         }
     }
 
-    // Legacy fallback so clicks still work even if input defines are weird
+    // Legacy fallback so clicks still work even if input defines are weird.
+    // We route it through the same guarded path to avoid double-firing.
     void OnMouseDown()
     {
-        PlayTap();                                    // frame-guard prevents double fire
-        manager?.TrySlideTile(this);
+        var cam = Camera.main;
+        if (cam == null) return;
+        TryHandleClickAtScreenPos(Input.mousePosition);
+    }
+
+    // ---- Single guarded click handler (the only place that triggers a move) ----
+    void TryHandleClickAtScreenPos(Vector2 screenPos)
+    {
+        // one-frame debounce so Update + OnMouseDown (or parent+child) can't double-trigger
+        if (Time.frameCount == _lastClickFrame) return;
+        _lastClickFrame = Time.frameCount;
+
+        var cam = Camera.main;
+        if (cam == null) return;
+
+        Vector3 wp = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+        Vector2 p2 = new Vector2(wp.x, wp.y);
+        var hit = Physics2D.OverlapPoint(p2);
+
+        if (hit != null && hit.gameObject == gameObject)
+        {
+            PlayTap();                 // SFX has its own frame guard
+            manager?.TrySlideTile(this);
+            // Debug to confirm single fire:
+            // Debug.Log($"[CLICK->TRYSLIDE] {name} frame {Time.frameCount}");
+        }
     }
 
     // ---- SFX helper ----
     void PlayTap()
     {
         if (!tapClip) return;
-        if (Time.frameCount == _lastTapFrame) return;
+        if (Time.frameCount == _lastTapFrame) return;  // prevent double SFX in same frame
         _lastTapFrame = Time.frameCount;
 
         _audio.pitch = UnityEngine.Random.Range(tapPitchJitter.x, tapPitchJitter.y);
@@ -160,8 +173,11 @@ public class RuneTile : MonoBehaviour
     // -----------------------
     // Rotation support
     // -----------------------
-    [HideInInspector] public int rotationSteps;  // 0..(quarterTurns-1)
+    [HideInInspector] public int rotationSteps;  // 0..(_maxSteps-1)
     int _maxSteps = 4;
+
+    // Let other scripts read how many steps are possible (e.g., 4 for quarter-turns)
+    public int MaxRotationSteps => _maxSteps;
 
     public void InitRotationSystem(int quarterTurns)
     {
@@ -177,15 +193,23 @@ public class RuneTile : MonoBehaviour
         ApplyRotationVisual();
     }
 
-    public int GetMaxSteps() => _maxSteps;
-
-    void ApplyRotationVisual()
+    // set an exact rotation step from outside (used by randomizer)
+    public void SetRotationSteps(int steps)
     {
-        // Rotate clockwise in 90° increments if _maxSteps == 4
-        float anglePerStep = 360f / Mathf.Max(1, _maxSteps);
-        float angle = anglePerStep * rotationSteps;
+        if (_maxSteps <= 1)
+        {
+            rotationSteps = 0;
+            ApplyRotationVisual();
+            return;
+        }
+        rotationSteps = ((steps % _maxSteps) + _maxSteps) % _maxSteps;
+        ApplyRotationVisual();
+    }
 
-        // Use positive angle so rotation visually matches typical clockwise motion
-        transform.localRotation = Quaternion.Euler(0f, 0f, angle);
+    // Apply the visual rotation (snap to exact step)
+    public void ApplyRotationVisual()
+    {
+        float angle = (360f / _maxSteps) * rotationSteps;
+        transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
     }
 }
