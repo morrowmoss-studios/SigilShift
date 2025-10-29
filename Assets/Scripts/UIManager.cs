@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Reflection; // for optional RebuildBoard reflection
 
 #if TMP_PRESENT || UNITY_TEXTMESHPRO
 using TMPro;
@@ -27,7 +28,6 @@ public class UIManager : MonoBehaviour
 #endif
     }
 
-
     // -------------------------------------------------------------
     //  Puzzle Settings UI
     // -------------------------------------------------------------
@@ -41,6 +41,9 @@ public class UIManager : MonoBehaviour
     [Tooltip("Checkbox to enable or disable tile rotation.")]
     [SerializeField] private Toggle rotationToggle;
 
+    [Header("Audio Settings UI")]
+    [SerializeField] private Toggle sfxToggle;
+
     [Header("Targets")]
     [SerializeField] private RunePuzzleManager puzzleManager;
     [SerializeField] private RuneBoardLoader boardLoader;
@@ -48,6 +51,7 @@ public class UIManager : MonoBehaviour
     // PlayerPrefs keys
     const string PP_SIZE_INDEX = "SS_PuzzleSizeIndex";
     const string PP_ROTATION   = "SS_RotationEnabled";
+    const string PP_SFX        = "SS_SFXEnabled";
 
     void Start()
     {
@@ -72,20 +76,24 @@ public class UIManager : MonoBehaviour
             sizeTMPDropdown.onValueChanged.AddListener(OnSizeChanged_TMP);
         }
 #endif
-        if (rotationToggle)
-            rotationToggle.onValueChanged.AddListener(OnRotationToggled);
+        if (rotationToggle) rotationToggle.onValueChanged.AddListener(OnRotationToggled);
+        if (sfxToggle)      sfxToggle.onValueChanged.AddListener(OnSFXToggled);
 
         // --- Load saved prefs ---
-        int savedIndex = PlayerPrefs.GetInt(PP_SIZE_INDEX, 0); // 0=3x3 default
-        bool savedRot  = PlayerPrefs.GetInt(PP_ROTATION, 1) == 1;
+        int  savedIndex = PlayerPrefs.GetInt(PP_SIZE_INDEX, 0); // 0=3x3 default
+        bool savedRot   = PlayerPrefs.GetInt(PP_ROTATION, 1) == 1;
+        bool savedSfx   = PlayerPrefs.GetInt(PP_SFX, 1) == 1;
 
-        if (sizeDropdown) sizeDropdown.SetValueWithoutNotify(savedIndex);
+        if (sizeDropdown)     sizeDropdown.SetValueWithoutNotify(savedIndex);
 #if TMP_PRESENT || UNITY_TEXTMESHPRO
-        if (sizeTMPDropdown) sizeTMPDropdown.SetValueWithoutNotify(savedIndex);
+        if (sizeTMPDropdown)  sizeTMPDropdown.SetValueWithoutNotify(savedIndex);
 #endif
-        if (rotationToggle) rotationToggle.SetIsOnWithoutNotify(savedRot);
+        if (rotationToggle)   rotationToggle.SetIsOnWithoutNotify(savedRot);
+        if (sfxToggle)        sfxToggle.SetIsOnWithoutNotify(savedSfx);
 
+        // Apply now (works whether this is a standalone Settings scene or overlay)
         ApplySettings(savedIndex, savedRot);
+        ApplyAudio(savedSfx);
     }
 
     void OnDestroy()
@@ -95,6 +103,7 @@ public class UIManager : MonoBehaviour
         if (sizeTMPDropdown) sizeTMPDropdown.onValueChanged.RemoveListener(OnSizeChanged_TMP);
 #endif
         if (rotationToggle) rotationToggle.onValueChanged.RemoveListener(OnRotationToggled);
+        if (sfxToggle)      sfxToggle.onValueChanged.RemoveListener(OnSFXToggled);
     }
 
     // -------------------------------------------------------------
@@ -118,6 +127,12 @@ public class UIManager : MonoBehaviour
     {
         PlayerPrefs.SetInt(PP_ROTATION, on ? 1 : 0);
         ApplySettings(GetCurrentSizeIndex(), on);
+    }
+
+    void OnSFXToggled(bool on)
+    {
+        PlayerPrefs.SetInt(PP_SFX, on ? 1 : 0);
+        ApplyAudio(on);
     }
 
     // -------------------------------------------------------------
@@ -145,22 +160,46 @@ public class UIManager : MonoBehaviour
             boardLoader.config.rows = newSize;
             boardLoader.config.cols = newSize;
             boardLoader.config.enableRotation = rotationOn;
-            boardLoader.config.quarterTurns = rotationOn ? 4 : 1;
+            boardLoader.config.quarterTurns   = rotationOn ? 4 : 1;
         }
 
         // update manager directly
-        puzzleManager.rotationEnabled = rotationOn;
+        puzzleManager.rotationEnabled      = rotationOn;
         puzzleManager.rotationQuarterTurns = rotationOn ? 4 : 1;
 
-        // rebuild tiles cleanly (re-run the loader)
-        // easiest way is to reload the scene or rebuild board here
-        // for testing we'll just shuffle/reset current tiles
+        // Try to call RuneBoardLoader.RebuildBoard(newSize, newSize) if you added it.
+        MethodInfo rebuild = typeof(RuneBoardLoader).GetMethod("RebuildBoard", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (rebuild != null && rebuild.GetParameters().Length == 2)
+        {
+            rebuild.Invoke(boardLoader, new object[] { newSize, newSize });
+        }
+
+        // Fallback or post-rebuild: reset & shuffle
         puzzleManager.ResetToSolved();
         puzzleManager.ShuffleRandomWalk(puzzleManager.shuffleSteps);
 
         Debug.Log($"[UI] Applied settings → {newSize}x{newSize}, Rotation {(rotationOn ? "ON" : "OFF")}");
     }
 
+    void ApplyAudio(bool sfxOn)
+    {
+        MuteByTag("SFX", !sfxOn);
+        Debug.Log($"[UI] Audio → SFX {(sfxOn ? "ON" : "OFF")}");
+    }
+
+    void MuteByTag(string tag, bool mute)
+    {
+        var objs = GameObject.FindGameObjectsWithTag(tag);
+        foreach (var go in objs)
+        {
+            var src = go.GetComponent<AudioSource>();
+            if (src) src.mute = mute;
+        }
+    }
+
+    // -------------------------------------------------------------
+    //  Helpers
+    // -------------------------------------------------------------
     int GetCurrentSizeIndex()
     {
 #if TMP_PRESENT || UNITY_TEXTMESHPRO
