@@ -53,5 +53,8 @@ TagManager:
   - name: UI
     uniqueID: 3862001013
     locked: 0
+  - name: SFX
+    uniqueID: 3765061565
+    locked: 0
   m_RenderingLayers:
   - Default

@@ -461,6 +461,23 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _audio.PlayOneShot(solvedClip, solvedVolume);
         _audio.pitch = 1f;
     }
+    
+    // Expose the manager's AudioSource (optional convenience)
+    public AudioSource SfxSource => _audio;
+
+// Global SFX mute/unmute for this puzzle instance (manager + any child sources)
+    public void ApplySfxMute(bool mute)
+    {
+        if (_audio) _audio.mute = mute;
+
+        // Also catch any tile/local sources (RuneTile may add one if parent missing)
+        var all = GetComponentsInChildren<AudioSource>(true);
+        foreach (var a in all)
+        {
+            if (a) a.mute = mute;
+        }
+    }
+
 
     IEnumerator CoSolveGlow()
 {
