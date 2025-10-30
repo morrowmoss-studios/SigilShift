@@ -64,6 +64,12 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField] private AudioClip solvedClip;                // plays once when puzzle is solved
     [SerializeField, Range(0f,1f)] private float solvedVolume = 0.9f;
     [SerializeField] private Vector2 solvedPitchJitter = new(0.98f, 1.02f);
+    
+    [Header("Hint FX")]
+    [SerializeField, Range(0.05f, 0.35f)] private float hintEnlarge = 0.18f; // +18% pop
+    [SerializeField, Range(0.2f, 1.2f)]  private float hintDuration = 0.65f;
+    [SerializeField, Range(2f, 25f)]     private float hintNudge = 8f;       // world-units * 0.001 (safe tiny push)
+    [SerializeField, Range(2f, 25f)]     private float hintRotateDeg = 12f;  // ±deg wiggle
 
     // --------- Solve Glow ----------
     [Header("Solve Glow")]
@@ -77,9 +83,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField] AnimationCurve glowScaleCurve = null;              // time -> 0..1
     [SerializeField] AnimationCurve glowAlphaCurve = null;              // time -> 0..1
 
-// keep your existing glowScalePunch; it’s the amplitude
+    // keep your existing glowScalePunch; it’s the amplitude
 
-    
     private AudioSource _audio;
 
     void Awake()
@@ -357,120 +362,161 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         busy = false;
         OnSolved();
     } 
-    // ===============================
-//  HINT: show a gentle nudge
-// ===============================
-public void ShowHint()
-{
-    if (busy || tiles == null || tiles.Length == 0) return;
 
-    // 1) If rotation is enabled: hint the first tile that is in the correct slot but wrong rotation
-    if (rotationEnabled && rotationQuarterTurns > 1)
+    // ===============================
+    //  HINT v2: bigger, clearer, rotation-aware
+    // ===============================
+    public void ShowHint()
     {
-        for (int i = 0; i < tiles.Length; i++)
+        if (busy || tiles == null || tiles.Length == 0) return;
+
+        // 1) Prioritize tiles already in correct slot but wrong rotation
+        if (rotationEnabled && rotationQuarterTurns > 1)
         {
-            if (i == blankTileIndex) continue;
-            // in correct slot?
-            if (tileToSlot[i] == i)
+            for (int i = 0; i < tiles.Length; i++)
             {
-                var t = tiles[i];
-                if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0) // 0 = upright target
+                if (i == blankTileIndex) continue;
+                if (tileToSlot[i] == i)   // correct slot
                 {
-                    StartCoroutine(CoHintPulse(t));
-                    return;
+                    var t = tiles[i];
+                    if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0) // needs rotation
+                    {
+                        StartCoroutine(CoHintRotate(t));
+                        return;
+                    }
                 }
             }
         }
-    }
 
-    // 2) Otherwise: among neighbors of the blank, choose the tile whose move best reduces distance
-    var neigh = GetNeighborSlots(blankSlot);
-    if (neigh.Count == 0) return;
+        // 2) Otherwise: nudge the best neighbor of the blank to slide
+        var neigh = GetNeighborSlots(blankSlot);
+        if (neigh.Count == 0) return;
 
-    int bestTile = -1;
-    int bestNewDist = int.MaxValue;
+        int bestTile = -1;
+        int bestScore = int.MaxValue;
 
-    foreach (int nSlot in neigh)
-    {
-        int tIdx = slotToTile[nSlot];
-        if (tIdx == blankTileIndex) continue;
-
-        var t = tiles[tIdx];
-        if (!t) continue;
-
-        // current logical pos & distance
-        int curDist = Manhattan(t.currentPos, t.correctPos);
-
-        // if it slides into the blank, its new pos becomes the blank's slot
-        int br = blankSlot / cols, bc = blankSlot % cols;
-        int newDist = Manhattan(new Vector2Int(bc, br), t.correctPos);
-
-        // Prefer strictly reducing moves; otherwise take the minimal newDist anyway
-        if (newDist < bestNewDist || (newDist == bestNewDist && newDist < curDist))
+        foreach (int nSlot in neigh)
         {
-            bestNewDist = newDist;
-            bestTile = tIdx;
+            int tIdx = slotToTile[nSlot];
+            if (tIdx == blankTileIndex) continue;
+
+            var t = tiles[tIdx];
+            if (!t) continue;
+
+            // Current distance to its goal
+            int cur = Manhattan(t.currentPos, t.correctPos);
+
+            // If moved into the blank, new pos = blank slot
+            int br = blankSlot / cols, bc = blankSlot % cols;
+            int newDist = Manhattan(new Vector2Int(bc, br), t.correctPos);
+
+            // Score prefers a strict improvement; ties choose the smaller newDist
+            int score = newDist * 10 + Mathf.Max(0, newDist - cur);
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestTile = tIdx;
+            }
+        }
+
+        if (bestTile >= 0)
+        {
+            // direction from tile to blank in world space (small nudge)
+            Vector3 dir = (slotWorldPos[blankSlot] - tiles[bestTile].transform.position).normalized;
+            StartCoroutine(CoHintSlide(tiles[bestTile], dir));
         }
     }
 
-    if (bestTile >= 0)
-        StartCoroutine(CoHintPulse(tiles[bestTile]));
-}
+    // Manhattan distance helper
+    int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
 
-// Manhattan distance helper
-int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
-
-// Nice soft glow pulse on a single tile (non-blocking)
-IEnumerator CoHintPulse(RuneTile tile)
-{
-    if (!tile) yield break;
-
-    // make a lightweight overlay using the tile's sprite
-    var src = tile.GetComponent<SpriteRenderer>();
-    if (!src || !src.sprite) yield break;
-
-    var go = new GameObject("HintHalo");
-    go.transform.SetParent(tile.transform, worldPositionStays: false);
-    go.transform.localPosition = Vector3.zero;
-    go.transform.localRotation = Quaternion.identity;
-    go.transform.localScale    = Vector3.one;
-
-    var sr = go.AddComponent<SpriteRenderer>();
-    sr.sprite         = src.sprite;
-    sr.sortingLayerID = src.sortingLayerID;
-    sr.sortingOrder   = src.sortingOrder + glowOrderBoost; // reuse your existing boost
-    sr.material       = additiveSpriteMaterial ? additiveSpriteMaterial : src.sharedMaterial;
-
-    // gentle cyan/gold hint
-    var baseCol = glowColor; // you already like this tone
-    baseCol.a = 0f;
-    sr.color  = baseCol;
-
-    float dur   = 0.65f;
-    float punch = Mathf.Clamp(glowScalePunch * 0.8f, 0.01f, 0.12f); // tiny swell
-    float t     = 0f;
-
-    // remember base scale so we don't drift
-    Vector3 baseScale = tile.transform.localScale;
-
-    while (t < dur)
+    // --- VISUALS: create a temporary overlay so we don't touch real tile/collider ---
+    SpriteRenderer MakeOverlayFor(RuneTile tile, out Transform fxRoot)
     {
-        t += Time.deltaTime;
-        float u = Mathf.Clamp01(t / dur);
+        fxRoot = null;
+        if (!tile) return null;
 
-        // smooth in/out
-        float a = Mathf.Sin(u * Mathf.PI);   // 0→1→0 alpha
-        float s = 1f + punch * a;            // subtle scale pulse
+        var src = tile.GetComponent<SpriteRenderer>();
+        if (!src || !src.sprite) return null;
 
-        var c = sr.color; c.a = a;
+        var go = new GameObject("HintFX");
+        go.transform.SetParent(tile.transform, worldPositionStays: false);
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localRotation = Quaternion.identity;
+        go.transform.localScale    = Vector3.one;
+        fxRoot = go.transform;
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite         = src.sprite;
+        sr.sortingLayerID = src.sortingLayerID;
+        sr.sortingOrder   = src.sortingOrder + glowOrderBoost;
+        sr.material       = additiveSpriteMaterial ? additiveSpriteMaterial : src.sharedMaterial;
+
+        var c = glowColor; c.a = 0f;
         sr.color = c;
-        go.transform.localScale = baseScale * s;
-
-        yield return null;
+        return sr;
     }
 
-    Destroy(go);
-}
+    // Slide-style hint: enlarge + nudge toward the blank
+    System.Collections.IEnumerator CoHintSlide(RuneTile tile, Vector3 worldDir)
+    {
+        var sr = MakeOverlayFor(tile, out var fx);
+        if (!sr) yield break;
+
+        // tiny nudge distance scaled to your scene (~0.008 world units by default)
+        float nudgeDist = hintNudge * 0.001f;
+
+        float dur = Mathf.Max(0.2f, hintDuration);
+        float t = 0f;
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float u = Mathf.Clamp01(t / dur);
+
+            // ease in/out
+            float a = Mathf.Sin(u * Mathf.PI);                    // alpha 0→1→0
+            float s = 1f + hintEnlarge * Mathf.Sin(u * Mathf.PI); // grow & return
+            Vector3 off = worldDir * (nudgeDist * Mathf.Sin(u * Mathf.PI));
+
+            // apply
+            var c = sr.color; c.a = a;
+            sr.color = c;
+            fx.localScale    = Vector3.one * s;
+            fx.localPosition = off;
+
+            yield return null;
+        }
+        if (fx) Destroy(fx.gameObject);
+    }
+
+    // Rotation-style hint: enlarge + small rotate wiggle
+    System.Collections.IEnumerator CoHintRotate(RuneTile tile)
+    {
+        var sr = MakeOverlayFor(tile, out var fx);
+        if (!sr) yield break;
+
+        float dur = Mathf.Max(0.2f, hintDuration);
+        float t = 0f;
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float u = Mathf.Clamp01(t / dur);
+
+            float a = Mathf.Sin(u * Mathf.PI);                        // alpha 0→1→0
+            float s = 1f + hintEnlarge * Mathf.Sin(u * Mathf.PI);     // scale pop
+            float rot = Mathf.Sin(u * Mathf.PI * 2f) * hintRotateDeg; // wiggle ±deg
+
+            var c = sr.color; c.a = a;
+            sr.color = c;
+            fx.localScale    = Vector3.one * s;
+            fx.localRotation = Quaternion.Euler(0, 0, rot);
+
+            yield return null;
+        }
+        if (fx) Destroy(fx.gameObject);
+    }
 
     // ===============================
     // Helpers
@@ -579,7 +625,7 @@ IEnumerator CoHintPulse(RuneTile tile)
     // Expose the manager's AudioSource (optional convenience)
     public AudioSource SfxSource => _audio;
 
-// Global SFX mute/unmute for this puzzle instance (manager + any child sources)
+    // Global SFX mute/unmute for this puzzle instance (manager + any child sources)
     public void ApplySfxMute(bool mute)
     {
         if (_audio) _audio.mute = mute;
@@ -592,71 +638,71 @@ IEnumerator CoHintPulse(RuneTile tile)
         }
     }
 
-
     IEnumerator CoSolveGlow()
-{
-    var root = new GameObject("SolveGlow");
-    root.transform.SetParent(transform, worldPositionStays: true);
-
-    var overlays = new List<(SpriteRenderer sr, Vector3 baseScale)>(tiles.Length);
-
-    for (int slot = 0; slot < tiles.Length; slot++)
     {
-        if (slot == blankTileIndex) continue;
+        var root = new GameObject("SolveGlow");
+        root.transform.SetParent(transform, worldPositionStays: true);
 
-        var tile  = tiles[slot];
-        var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
-        if (!srcSR || !srcSR.sprite) continue;
+        var overlays = new List<(SpriteRenderer sr, Vector3 baseScale)>(tiles.Length);
 
-        var go = new GameObject($"Glow_{slot}");
-        go.transform.SetParent(root.transform, worldPositionStays: true);
-        go.transform.position = slotWorldPos[slot];
-        go.transform.rotation = tile.transform.rotation;
-
-        var glowSR = go.AddComponent<SpriteRenderer>();
-        glowSR.sprite         = srcSR.sprite;
-        glowSR.sortingLayerID = srcSR.sortingLayerID;
-        glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
-        glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
-
-        var c = glowColor; c.a = 0f;
-        glowSR.color = c;
-
-        Vector3 baseScale = tile.transform.localScale;
-        go.transform.localScale = baseScale;
-
-        overlays.Add((glowSR, baseScale));
-    }
-
-    float dur   = Mathf.Max(0.1f, glowDuration);
-    float punch = Mathf.Clamp(glowScalePunch, 0f, 0.3f); // clamp to 0.3x for safety
-    float t = 0f;
-
-    while (t < dur)
-    {
-        t += Time.deltaTime;
-        float u = Mathf.Clamp01(t / dur);
-
-        float a = Mathf.Sin(u * Mathf.PI);   // alpha wave
-        float k = a * a;                     // smoother scale wave
-
-        // limit total swell so glow edges don't overlap too much
-        float s = Mathf.Min(1f + punch * k, 1.1f); // hard cap at 10% growth
-
-        foreach (var (sr, baseScale) in overlays)
+        for (int slot = 0; slot < tiles.Length; slot++)
         {
-            if (!sr) continue;
+            if (slot == blankTileIndex) continue;
 
-            var col = sr.color;
-            col.a = glowColor.a * a;
-            sr.color = col;
+            var tile  = tiles[slot];
+            var srcSR = tile ? tile.GetComponent<SpriteRenderer>() : null;
+            if (!srcSR || !srcSR.sprite) continue;
 
-            sr.transform.localScale = baseScale * s;
+            var go = new GameObject($"Glow_{slot}");
+            go.transform.SetParent(root.transform, worldPositionStays: true);
+            go.transform.position = slotWorldPos[slot];
+            go.transform.rotation = tile.transform.rotation;
+
+            var glowSR = go.AddComponent<SpriteRenderer>();
+            glowSR.sprite         = srcSR.sprite;
+            glowSR.sortingLayerID = srcSR.sortingLayerID;
+            glowSR.sortingOrder   = srcSR.sortingOrder + glowOrderBoost;
+            glowSR.material       = additiveSpriteMaterial ? additiveSpriteMaterial : srcSR.sharedMaterial;
+
+            var c = glowColor; c.a = 0f;
+            glowSR.color = c;
+
+            Vector3 baseScale = tile.transform.localScale;
+            go.transform.localScale = baseScale;
+
+            overlays.Add((glowSR, baseScale));
         }
 
-        yield return null;
-    }
+        float dur   = Mathf.Max(0.1f, glowDuration);
+        float punch = Mathf.Clamp(glowScalePunch, 0f, 0.3f); // clamp to 0.3x for safety
+        float t = 0f;
 
-    if (root) Destroy(root);
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float u = Mathf.Clamp01(t / dur);
+
+            float a = Mathf.Sin(u * Mathf.PI);   // alpha wave
+            float k = a * a;                     // smoother scale wave
+
+            // limit total swell so glow edges don't overlap too much
+            float s = Mathf.Min(1f + punch * k, 1.1f); // hard cap at 10% growth
+
+            foreach (var (sr, baseScale) in overlays)
+            {
+                if (!sr) continue;
+
+                var col = sr.color;
+                col.a = glowColor.a * a;
+                sr.color = col;
+
+                sr.transform.localScale = baseScale * s;
+            }
+
+            yield return null;
+        }
+
+        if (root) Destroy(root);
+    }
 }
-}
+ 
