@@ -464,7 +464,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Are you sure you want to quit?
+  m_text: Do you want to return to the main menu?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
   m_sharedMaterial: {fileID: 2339121532890614860, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
@@ -713,7 +713,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -100, y: 130}
+  m_AnchoredPosition: {x: -75, y: 130}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1872075191
@@ -736,7 +736,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Quit Game?
+  m_text: Go Home?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
   m_sharedMaterial: {fileID: 2339121532890614860, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
@@ -826,7 +826,7 @@ GameObject:
   - component: {fileID: 1893914106}
   - component: {fileID: 1893914105}
   m_Layer: 0
-  m_Name: QuitPopUp
+  m_Name: HomePopUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -844,7 +844,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d47b7f24f5ff44898a22f4677c6004f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  group: {fileID: 0}
+  group: {fileID: 1905340057}
   confirmButton: {fileID: 424642612}
   cancelButton: {fileID: 2003434586}
   header: {fileID: 1872075191}
@@ -879,6 +879,7 @@ GameObject:
   - component: {fileID: 1905340055}
   - component: {fileID: 1905340054}
   - component: {fileID: 1905340053}
+  - component: {fileID: 1905340057}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -935,7 +936,7 @@ Canvas:
   m_GameObject: {fileID: 1905340052}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -974,6 +975,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!225 &1905340057
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905340052}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2003434584
 GameObject:
   m_ObjectHideFlags: 0

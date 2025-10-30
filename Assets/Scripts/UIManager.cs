@@ -41,6 +41,8 @@ public class UIManager : MonoBehaviour
     [Header("Targets (optional in Settings scene)")]
     [SerializeField] private RunePuzzleManager puzzleManager;   // can be null in Settings scene
     [SerializeField] private RuneBoardLoader  boardLoader;      // can be null in Settings scene
+    
+    [SerializeField] private string mainMenuSceneName = "MainMenu";
 
     // PlayerPrefs keys
     private const string PP_SIZE_INDEX = "SS_PuzzleSizeIndex";
@@ -189,4 +191,21 @@ public class UIManager : MonoBehaviour
     {
         LoadScene(sceneName);
     }
+    
+// --- Quit Popup hooks ---
+    public void ConfirmQuit()            // hooked to Confirm button
+    {
+        // optional: if this scene ever shows settings, you can persist them here
+        if (Application.isPlaying)
+            PlayerPrefs.Save();
+
+        QuitGame();                      // uses your existing method
+    }
+
+    public void CancelQuit()             // hooked to Cancel button
+    {
+        // go back to main menu (or wherever you want)
+        LoadScene(mainMenuSceneName);    // uses your existing method
+    }
+
 }
