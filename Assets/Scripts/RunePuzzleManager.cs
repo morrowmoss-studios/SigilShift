@@ -356,7 +356,121 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         busy = false;
         OnSolved();
+    } 
+    // ===============================
+//  HINT: show a gentle nudge
+// ===============================
+public void ShowHint()
+{
+    if (busy || tiles == null || tiles.Length == 0) return;
+
+    // 1) If rotation is enabled: hint the first tile that is in the correct slot but wrong rotation
+    if (rotationEnabled && rotationQuarterTurns > 1)
+    {
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            if (i == blankTileIndex) continue;
+            // in correct slot?
+            if (tileToSlot[i] == i)
+            {
+                var t = tiles[i];
+                if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0) // 0 = upright target
+                {
+                    StartCoroutine(CoHintPulse(t));
+                    return;
+                }
+            }
+        }
     }
+
+    // 2) Otherwise: among neighbors of the blank, choose the tile whose move best reduces distance
+    var neigh = GetNeighborSlots(blankSlot);
+    if (neigh.Count == 0) return;
+
+    int bestTile = -1;
+    int bestNewDist = int.MaxValue;
+
+    foreach (int nSlot in neigh)
+    {
+        int tIdx = slotToTile[nSlot];
+        if (tIdx == blankTileIndex) continue;
+
+        var t = tiles[tIdx];
+        if (!t) continue;
+
+        // current logical pos & distance
+        int curDist = Manhattan(t.currentPos, t.correctPos);
+
+        // if it slides into the blank, its new pos becomes the blank's slot
+        int br = blankSlot / cols, bc = blankSlot % cols;
+        int newDist = Manhattan(new Vector2Int(bc, br), t.correctPos);
+
+        // Prefer strictly reducing moves; otherwise take the minimal newDist anyway
+        if (newDist < bestNewDist || (newDist == bestNewDist && newDist < curDist))
+        {
+            bestNewDist = newDist;
+            bestTile = tIdx;
+        }
+    }
+
+    if (bestTile >= 0)
+        StartCoroutine(CoHintPulse(tiles[bestTile]));
+}
+
+// Manhattan distance helper
+int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+
+// Nice soft glow pulse on a single tile (non-blocking)
+IEnumerator CoHintPulse(RuneTile tile)
+{
+    if (!tile) yield break;
+
+    // make a lightweight overlay using the tile's sprite
+    var src = tile.GetComponent<SpriteRenderer>();
+    if (!src || !src.sprite) yield break;
+
+    var go = new GameObject("HintHalo");
+    go.transform.SetParent(tile.transform, worldPositionStays: false);
+    go.transform.localPosition = Vector3.zero;
+    go.transform.localRotation = Quaternion.identity;
+    go.transform.localScale    = Vector3.one;
+
+    var sr = go.AddComponent<SpriteRenderer>();
+    sr.sprite         = src.sprite;
+    sr.sortingLayerID = src.sortingLayerID;
+    sr.sortingOrder   = src.sortingOrder + glowOrderBoost; // reuse your existing boost
+    sr.material       = additiveSpriteMaterial ? additiveSpriteMaterial : src.sharedMaterial;
+
+    // gentle cyan/gold hint
+    var baseCol = glowColor; // you already like this tone
+    baseCol.a = 0f;
+    sr.color  = baseCol;
+
+    float dur   = 0.65f;
+    float punch = Mathf.Clamp(glowScalePunch * 0.8f, 0.01f, 0.12f); // tiny swell
+    float t     = 0f;
+
+    // remember base scale so we don't drift
+    Vector3 baseScale = tile.transform.localScale;
+
+    while (t < dur)
+    {
+        t += Time.deltaTime;
+        float u = Mathf.Clamp01(t / dur);
+
+        // smooth in/out
+        float a = Mathf.Sin(u * Mathf.PI);   // 0→1→0 alpha
+        float s = 1f + punch * a;            // subtle scale pulse
+
+        var c = sr.color; c.a = a;
+        sr.color = c;
+        go.transform.localScale = baseScale * s;
+
+        yield return null;
+    }
+
+    Destroy(go);
+}
 
     // ===============================
     // Helpers
