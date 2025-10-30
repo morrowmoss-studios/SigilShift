@@ -276,7 +276,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 424642613}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2095627589}
+        m_TargetAssemblyTypeName: HomePopupController, Assembly-CSharp
+        m_MethodName: OnConfirmGoHome
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
 --- !u!114 &424642613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -824,7 +836,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1893914106}
-  - component: {fileID: 1893914105}
   m_Layer: 0
   m_Name: HomePopUp
   m_TagString: Untagged
@@ -832,25 +843,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1893914105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1893914104}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d47b7f24f5ff44898a22f4677c6004f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  group: {fileID: 1905340057}
-  confirmButton: {fileID: 424642612}
-  cancelButton: {fileID: 2003434586}
-  header: {fileID: 1872075191}
-  body: {fileID: 1462121527}
-  fadeTime: 0.18
-  popScale: 1.03
 --- !u!4 &1893914106
 Transform:
   m_ObjectHideFlags: 0
@@ -879,7 +871,6 @@ GameObject:
   - component: {fileID: 1905340055}
   - component: {fileID: 1905340054}
   - component: {fileID: 1905340053}
-  - component: {fileID: 1905340057}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -975,18 +966,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!225 &1905340057
-CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905340052}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
 --- !u!1 &2003434584
 GameObject:
   m_ObjectHideFlags: 0
@@ -1069,7 +1048,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2003434587}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2095627589}
+        m_TargetAssemblyTypeName: HomePopupController, Assembly-CSharp
+        m_MethodName: OnCancelStay
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
 --- !u!114 &2003434587
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1319,6 +1310,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2082653353}
   m_CullTransparentMesh: 1
+--- !u!1 &2095627588
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2095627590}
+  - component: {fileID: 2095627589}
+  m_Layer: 0
+  m_Name: HomePopUpController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2095627589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095627588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8deb3387f6b1454ca63567f0370bdd9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainMenuScene: MainMenu
+  pauseGameWhileOpen: 1
+--- !u!4 &2095627590
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095627588}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.2013, y: -0.40707, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2121078807
 GameObject:
   m_ObjectHideFlags: 0
@@ -1405,3 +1442,4 @@ SceneRoots:
   - {fileID: 1459132384}
   - {fileID: 1893914106}
   - {fileID: 2121078810}
+  - {fileID: 2095627590}
