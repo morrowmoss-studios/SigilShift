@@ -340,7 +340,7 @@ MonoBehaviour:
   hintNudge: 8
   hintRotateDeg: 12
   additiveSpriteMaterial: {fileID: 0}
-  glowColor: {r: 0.9528302, g: 0.87540287, b: 0.22921856, a: 1}
+  glowColor: {r: 1, g: 0.95, b: 0.65, a: 1}
   glowDuration: 1.4
   glowScalePunch: 0.0533
   glowOrderBoost: 25
@@ -2566,7 +2566,7 @@ MonoBehaviour:
   - {fileID: 1451235570}
   - {fileID: 781707103}
   - {fileID: 1573204414}
-  config: {fileID: 11400000, guid: 49d2996021ba7408ba4a15c346e889d4, type: 2}
+  config: {fileID: 11400000, guid: 453ee34e8bd444d428fdbc9cc517671a, type: 2}
   resourcePath: 
   tileMaterial: {fileID: 2100000, guid: f1bfb0e30f27d4b98b5dce21a159660c, type: 2}
   baseOrder: 100

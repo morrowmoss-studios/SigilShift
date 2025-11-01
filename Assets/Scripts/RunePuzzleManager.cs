@@ -57,6 +57,11 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // --- Hint memory to avoid ping-pong ---
     int _lastHintTile = -1;
 
+    // --- New: remember the last player move so hints don't suggest the exact undo ---
+    int _lastPlayerTile = -1;
+    int _lastPlayerBlankSlot = -1; // the blank slot the tile moved into on the last player move
+
+
     // ----------  SFX  ----------
     [Header("SFX (Manager)")]
     [SerializeField] private AudioClip slideClip;
@@ -193,6 +198,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         int tileSlot = tileToSlot[tileIdx];
 
+        // click-to-rotate if not adjacent
         if (!IsAdjacent(tileSlot, blankSlot))
         {
             if (rotationEnabled && rotationQuarterTurns > 1)
@@ -201,11 +207,20 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         }
 
         busy = true;
-        Vector3 target = slotWorldPos[blankSlot];
 
+        // NEW: remember where the blank was before this move (so we can detect a direct undo next hint)
+        int prevBlankSlot = blankSlot;
+
+        Vector3 target = slotWorldPos[blankSlot];
         tile.SlideTo(target, onComplete: () =>
         {
+            // commit mapping (push to history)
             CommitMove(tileIdx, oldSlot: tileSlot, pushHistory: true);
+
+            // NEW: mark the last player move for anti-undo hint logic
+            _lastPlayerTile = tileIdx;
+            _lastPlayerBlankSlot = prevBlankSlot;
+
             PlaySlideSfx();
             busy = false;
 
@@ -213,7 +228,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
                 OnSolved();
         });
     }
-
+    
     // ===============================
     //  Public controls
     // ===============================
@@ -238,6 +253,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         ApplyBlankVisualState(hide: true);
         undoStack.Clear();
         _lastHintTile = -1;
+        _lastPlayerTile = -1;
+        _lastPlayerBlankSlot = -1;
     }
 
     public void ShuffleRandomWalk(int steps)
@@ -283,6 +300,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         ApplyBlankVisualState(hide: true);
         _lastHintTile = -1;
+        _lastPlayerTile = -1;
+        _lastPlayerBlankSlot = -1;
     }
 
     public void AutoSolve(float stepDelay = 0.02f)
@@ -337,11 +356,14 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // ===============================
     //  HINT v2: bigger, clearer, rotation-aware
     // ===============================
-   public void ShowHint()
+   // ===============================
+//  HINT v2: bigger, clearer, rotation-aware, anti-undo
+// ===============================
+public void ShowHint()
 {
     if (busy || tiles == null || tiles.Length == 0) return;
 
-    // 1) Prioritize tiles already in correct slot but wrong rotation
+    // 0) If any tile is already in its correct slot but rotated wrong, prefer a rotate hint
     if (rotationEnabled && rotationQuarterTurns > 1)
     {
         for (int i = 0; i < tiles.Length; i++)
@@ -359,10 +381,11 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         }
     }
 
-    // 2) Try to slide a neighbor that STRICTLY improves distance
+    // Neighbors of the blank (candidates to slide into it)
     var neigh = GetNeighborSlots(blankSlot);
     if (neigh.Count == 0) return;
 
+    // --- Pass A: strict improvement only ---
     int bestTile = -1;
     int bestScore = int.MaxValue;
 
@@ -374,15 +397,20 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         var t = tiles[tIdx];
         if (!t) continue;
 
+        // HARD BLOCK: never suggest the exact undo of the last player move
+        // (same tile back into the slot it just came from)
+        if (tIdx == _lastPlayerTile && nSlot == _lastPlayerBlankSlot)
+            continue;
+
         int cur = Manhattan(t.currentPos, t.correctPos);
         int br = blankSlot / cols, bc = blankSlot % cols;
         int newDist = Manhattan(new Vector2Int(bc, br), t.correctPos);
 
-        if (newDist >= cur) continue;                 // strict improvement only
+        if (newDist >= cur) continue; // require a strict improvement
 
-        int improvement = cur - newDist;              // >= 1
+        int improvement = cur - newDist;               // >= 1
         int score = (newDist * 10) - (improvement * 100);
-        if (tIdx == _lastHintTile) score += 25;       // avoid yo-yo
+        if (tIdx == _lastHintTile) score += 25;        // avoid hinting same tile twice
 
         if (score < bestScore) { bestScore = score; bestTile = tIdx; }
     }
@@ -395,7 +423,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         return;
     }
 
-    // 3) Plateau breaker: if nothing improves, choose neighbor with smallest resulting distance
+    // --- Pass B: plateau breaker (no strict improvement available) ---
     bestTile = -1;
     bestScore = int.MaxValue;
 
@@ -404,11 +432,15 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         int tIdx = slotToTile[nSlot];
         if (tIdx == blankTileIndex) continue;
 
+        // HARD BLOCK: never suggest the exact undo of the last player move
+        if (tIdx == _lastPlayerTile && nSlot == _lastPlayerBlankSlot)
+            continue;
+
         int br = blankSlot / cols, bc = blankSlot % cols;
         int newDist = Manhattan(new Vector2Int(bc, br), tiles[tIdx].correctPos);
 
-        int score = newDist * 10;                     // prefer smaller resulting distance
-        if (tIdx == _lastHintTile) score += 10;       // mild anti-yo-yo
+        int score = newDist * 10;                 // prefer smaller resulting distance
+        if (tIdx == _lastHintTile) score += 10;   // mild anti-yo-yo
 
         if (score < bestScore) { bestScore = score; bestTile = tIdx; }
     }
@@ -421,7 +453,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         return;
     }
 
-    // 4) Final fallback: if rotation is enabled, point at a wrong-rotation-in-correct-slot (again)
+    // --- Last-resort fallback: if plateau-breaker found nothing and rotation is enabled,
+    // check again for any rotation correction we can hint (edge cases).
     if (rotationEnabled && rotationQuarterTurns > 1)
     {
         for (int i = 0; i < tiles.Length; i++)
@@ -439,7 +472,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         }
     }
 }
-
 
     // Manhattan distance helper
     int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
