@@ -16,9 +16,9 @@ public interface ISlidingPuzzle
 [RequireComponent(typeof(BoxCollider2D))]
 public class RuneTile : MonoBehaviour
 {
-    [HideInInspector] public ISlidingPuzzle manager;   // auto-found in Awake (parent), or set by your loader
-    [HideInInspector] public Vector2Int correctPos;    // where this tile belongs
-    [HideInInspector] public Vector2Int currentPos;    // where this tile is now
+    [HideInInspector] public ISlidingPuzzle manager;   // set by loader or auto-found
+    [HideInInspector] public Vector2Int correctPos;
+    [HideInInspector] public Vector2Int currentPos;
 
     [SerializeField] float slideTime = 0.12f;          // seconds per slide
     bool sliding;
@@ -40,6 +40,19 @@ public class RuneTile : MonoBehaviour
     // ---- Click guard (prevents double firing from multiple input paths) ----
     int _lastClickFrame = -9999;
 
+    // -----------------------
+    // Explicit rotation (desktop + mobile)
+    // -----------------------
+    [Header("Explicit Rotate Input")]
+    [Tooltip("Hold duration (seconds) to count as a long-press rotate.")]
+    [SerializeField] float longPressSeconds = 0.35f;
+    [Tooltip("Allow right-click / Shift+Left / long-press to rotate even if adjacent to blank.")]
+    [SerializeField] bool allowExplicitRotate = true;
+
+    bool _pointerDown;
+    float _downAt;
+    bool _longPressTriggered;
+
     void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
@@ -58,7 +71,6 @@ public class RuneTile : MonoBehaviour
     }
 
     public void SetSlideTime(float seconds) => slideTime = Mathf.Max(0.01f, seconds);
-
     public void SetLabel(int id) => gameObject.name = $"Tile_{id}";
 
     /// <summary>Place instantly or start a smooth slide to pos.</summary>
@@ -88,7 +100,7 @@ public class RuneTile : MonoBehaviour
 
     void Update()
     {
-        // slide animation
+        // ---------- slide animation ----------
         if (sliding)
         {
             t += Time.deltaTime / Mathf.Max(0.0001f, slideTime);
@@ -102,43 +114,136 @@ public class RuneTile : MonoBehaviour
             }
         }
 
-        // unified click check (new input OR legacy)
-        bool clicked = false;
-        Vector2 screenPos = default;
+        // ---------- INPUT (unified) ----------
+        // We handle:
+        //  - Right-click = rotate
+        //  - Shift + Left-click = rotate
+        //  - Long-press = rotate
+        //  - Simple tap = slide (existing behavior)
 
 #if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        var mouse   = Mouse.current;
+        var kb      = Keyboard.current;
+        bool hasMouse = (mouse != null);
+
+        bool leftDownThis  = hasMouse && mouse.leftButton.wasPressedThisFrame;
+        bool leftUpThis    = hasMouse && mouse.leftButton.wasReleasedThisFrame;
+        bool leftHeld      = hasMouse && mouse.leftButton.isPressed;
+        bool rightDownThis = hasMouse && mouse.rightButton.wasPressedThisFrame;
+
+        bool shift = (kb != null) && ((kb.leftShiftKey?.isPressed ?? false) || (kb.rightShiftKey?.isPressed ?? false));
+
+// --- explicit rotate on right-click or Shift+Left (only if over this tile) ---
+        if (allowExplicitRotate && hasMouse)
         {
-            clicked = true;
-            screenPos = Mouse.current.position.ReadValue();
+            Vector2 pos = mouse.position.ReadValue();
+            if (rightDownThis && PointerOverSelf(pos))
+            {
+                TryExplicitRotate();
+                _longPressTriggered = true;
+            }
+            else if (leftDownThis && shift && PointerOverSelf(pos))
+            {
+                TryExplicitRotate();
+                _longPressTriggered = true;
+            }
         }
+
+// --- long-press detection (only if the press started on this tile) ---
+        if (leftDownThis && hasMouse)
+        {
+            Vector2 pos = mouse.position.ReadValue();
+            _pointerDown = PointerOverSelf(pos);   // only start tracking if down began on this tile
+            _downAt = Time.time;
+            _longPressTriggered = false;
+        }
+
+        if (_pointerDown && !_longPressTriggered && leftHeld && allowExplicitRotate && hasMouse)
+        {
+            if (Time.time - _downAt >= longPressSeconds)
+            {
+                Vector2 pos = mouse.position.ReadValue();
+                if (PointerOverSelf(pos))          // still over tile (optional but nice)
+                {
+                    TryExplicitRotate();
+                    _longPressTriggered = true;
+                }
+            }
+        }
+
+        if (leftUpThis && hasMouse)
+        {
+            Vector2 pos = mouse.position.ReadValue();
+            if (!_longPressTriggered && PointerOverSelf(pos))
+            {
+                TryHandleClickAtScreenPos(pos);    // treat as slide-tap
+            }
+            _pointerDown = false;
+        }
+        
 #else
-        if (Input.GetMouseButtonDown(0))
-        {
-            clicked = true;
-            screenPos = Input.mousePosition;
-        }
-#endif
+        // -------- Legacy Input System --------
+       bool leftDownThis  = Input.GetMouseButtonDown(0);
+    bool leftUpThis    = Input.GetMouseButtonUp(0);
+    bool leftHeld      = Input.GetMouseButton(0);
+    bool rightDownThis = Input.GetMouseButtonDown(1);
+    bool shift         = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+    Vector2 mpos       = Input.mousePosition;
 
-        if (clicked)
-        {
-            TryHandleClickAtScreenPos(screenPos);
-        }
-    }
-
-    // Legacy fallback so clicks still work even if input defines are weird.
-    // We route it through the same guarded path to avoid double-firing.
-    void OnMouseDown()
+// explicit rotate: right click or Shift+Left — only if over this tile
+if (allowExplicitRotate)
+{
+    if (rightDownThis && PointerOverSelf(mpos))
     {
-        var cam = Camera.main;
-        if (cam == null) return;
-        TryHandleClickAtScreenPos(Input.mousePosition);
+        TryExplicitRotate();
+        _longPressTriggered = true;
     }
+    else if (leftDownThis && shift && PointerOverSelf(mpos))
+    {
+        TryExplicitRotate();
+        _longPressTriggered = true;
+    }
+}
+
+// long-press, only if press began on this tile
+if (leftDownThis)
+{
+    _pointerDown = PointerOverSelf(mpos);
+    _downAt = Time.time;
+    _longPressTriggered = false;
+}
+
+if (_pointerDown && !_longPressTriggered && leftHeld && allowExplicitRotate)
+{
+    if (Time.time - _downAt >= longPressSeconds)
+    {
+        if (PointerOverSelf(mpos))
+        {
+            TryExplicitRotate();
+            _longPressTriggered = true;
+        }
+    }
+}
+
+if (leftUpThis)
+{
+    if (!_longPressTriggered && PointerOverSelf(mpos))
+    {
+        TryHandleClickAtScreenPos(mpos);
+    }
+    _pointerDown = false;
+}
+
+#endif
+    }
+
+    // We keep this method but make it a no-op to avoid double-firing; Update handles clicks.
+    void OnMouseDown() { /* handled centrally in Update */ }
 
     // ---- Single guarded click handler (the only place that triggers a move) ----
     void TryHandleClickAtScreenPos(Vector2 screenPos)
     {
-        // one-frame debounce so Update + OnMouseDown (or parent+child) can't double-trigger
+        // one-frame debounce so multiple input paths can't double-trigger
         if (Time.frameCount == _lastClickFrame) return;
         _lastClickFrame = Time.frameCount;
 
@@ -153,8 +258,6 @@ public class RuneTile : MonoBehaviour
         {
             PlayTap();                 // SFX has its own frame guard
             manager?.TrySlideTile(this);
-            // Debug to confirm single fire:
-            // Debug.Log($"[CLICK->TRYSLIDE] {name} frame {Time.frameCount}");
         }
     }
 
@@ -176,7 +279,6 @@ public class RuneTile : MonoBehaviour
     [HideInInspector] public int rotationSteps;  // 0..(_maxSteps-1)
     int _maxSteps = 4;
 
-    // Let other scripts read how many steps are possible (e.g., 4 for quarter-turns)
     public int MaxRotationSteps => _maxSteps;
 
     public void InitRotationSystem(int quarterTurns)
@@ -206,10 +308,48 @@ public class RuneTile : MonoBehaviour
         ApplyRotationVisual();
     }
 
-    // Apply the visual rotation (snap to exact step)
     public void ApplyRotationVisual()
     {
         float angle = (360f / _maxSteps) * rotationSteps;
         transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
     }
+
+    // ---- core explicit-rotate path (bypasses adjacency) ----
+    void TryExplicitRotate()
+    {
+        if (!allowExplicitRotate) return;
+        if (manager == null) return;                   // need to respect game rules
+        // Only rotate if rotation is globally enabled and the tile supports rotation
+        if (!GetRotationEnabledFromManager()) return;
+        if (MaxRotationSteps <= 1) return;
+
+        RotateOnce();
+    }
+
+    // Lightweight check so we don’t need to reference concrete manager type
+    bool GetRotationEnabledFromManager()
+    {
+        // If your ISlidingPuzzle does not expose this, it’s fine:
+        // returning true just uses RotateOnce harmlessly.
+        try
+        {
+            var m = manager as MonoBehaviour;
+            if (!m) return true;
+            var fi = m.GetType().GetField("rotationEnabled");
+            if (fi != null && fi.FieldType == typeof(bool))
+                return (bool)fi.GetValue(m);
+        }
+        catch { /* ignore */ }
+        return true;
+    }
+    
+    bool PointerOverSelf(Vector2 screenPos)
+    {
+        var cam = Camera.main;
+        if (!cam) return false;
+        Vector3 wp = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+        var hit = Physics2D.OverlapPoint(new Vector2(wp.x, wp.y));
+        return hit != null && hit.gameObject == gameObject;
+    }
+
 }

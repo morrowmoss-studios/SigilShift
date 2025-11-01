@@ -171,6 +171,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &184941272
 BoxCollider2D:
@@ -340,7 +342,7 @@ MonoBehaviour:
   hintNudge: 8
   hintRotateDeg: 12
   additiveSpriteMaterial: {fileID: 0}
-  glowColor: {r: 0.9528302, g: 0.87540287, b: 0.22921856, a: 1}
+  glowColor: {r: 0.22745095, g: 0.89622384, b: 0.9529412, a: 1}
   glowDuration: 1.4
   glowScalePunch: 0.0533
   glowOrderBoost: 25
@@ -444,6 +446,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &439962563
 BoxCollider2D:
@@ -598,6 +602,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &489317944
 BoxCollider2D:
@@ -1162,6 +1168,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &781707104
 BoxCollider2D:
@@ -1463,6 +1471,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1293764894
 BoxCollider2D:
@@ -1836,6 +1846,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1451235571
 BoxCollider2D:
@@ -2155,6 +2167,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1561601248
 BoxCollider2D:
@@ -2410,6 +2424,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1573204415
 BoxCollider2D:
@@ -2631,6 +2647,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1854267264
 BoxCollider2D:
