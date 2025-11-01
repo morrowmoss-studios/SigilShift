@@ -337,82 +337,109 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // ===============================
     //  HINT v2: bigger, clearer, rotation-aware
     // ===============================
-    public void ShowHint()
+   public void ShowHint()
+{
+    if (busy || tiles == null || tiles.Length == 0) return;
+
+    // 1) Prioritize tiles already in correct slot but wrong rotation
+    if (rotationEnabled && rotationQuarterTurns > 1)
     {
-        if (busy || tiles == null || tiles.Length == 0) return;
-
-        // 1) Prioritize tiles already in correct slot but wrong rotation
-        if (rotationEnabled && rotationQuarterTurns > 1)
+        for (int i = 0; i < tiles.Length; i++)
         {
-            for (int i = 0; i < tiles.Length; i++)
+            if (i == blankTileIndex) continue;
+            if (tileToSlot[i] == i)
             {
-                if (i == blankTileIndex) continue;
-                if (tileToSlot[i] == i)
+                var t = tiles[i];
+                if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0)
                 {
-                    var t = tiles[i];
-                    if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0)
-                    {
-                        StartCoroutine(CoHintRotate(t));
-                        return;
-                    }
-                }
-            }
-        }
-
-        // 2) Otherwise: nudge the best neighbor of the blank to slide (must strictly improve)
-        var neigh = GetNeighborSlots(blankSlot);
-        if (neigh.Count == 0) return;
-
-        int bestTile = -1;
-        int bestScore = int.MaxValue;
-
-        foreach (int nSlot in neigh)
-        {
-            int tIdx = slotToTile[nSlot];
-            if (tIdx == blankTileIndex) continue;
-
-            var t = tiles[tIdx];
-            if (!t) continue;
-
-            int cur = Manhattan(t.currentPos, t.correctPos);
-            int br = blankSlot / cols, bc = blankSlot % cols;
-            int newDist = Manhattan(new Vector2Int(bc, br), t.correctPos);
-
-            if (newDist >= cur) continue; // require strict improvement
-
-            int improvement = cur - newDist;                 // >= 1
-            int score = (newDist * 10) - (improvement * 100);
-            if (tIdx == _lastHintTile) score += 25;          // avoid ping-pong
-
-            if (score < bestScore) { bestScore = score; bestTile = tIdx; }
-        }
-
-        if (bestTile >= 0)
-        {
-            _lastHintTile = bestTile;
-            Vector3 dir = (slotWorldPos[blankSlot] - tiles[bestTile].transform.position).normalized;
-            StartCoroutine(CoHintSlide(tiles[bestTile], dir));
-            return;
-        }
-
-        // 3) Fallback: if nothing improves, and rotation enabled, show a rotate hint if any
-        if (rotationEnabled && rotationQuarterTurns > 1)
-        {
-            for (int i = 0; i < tiles.Length; i++)
-            {
-                if (i == blankTileIndex) continue;
-                if (tileToSlot[i] == i)
-                {
-                    var t = tiles[i];
-                    if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0)
-                    {
-                        StartCoroutine(CoHintRotate(t));
-                        return;
-                    }
+                    StartCoroutine(CoHintRotate(t));
+                    return;
                 }
             }
         }
     }
+
+    // 2) Try to slide a neighbor that STRICTLY improves distance
+    var neigh = GetNeighborSlots(blankSlot);
+    if (neigh.Count == 0) return;
+
+    int bestTile = -1;
+    int bestScore = int.MaxValue;
+
+    foreach (int nSlot in neigh)
+    {
+        int tIdx = slotToTile[nSlot];
+        if (tIdx == blankTileIndex) continue;
+
+        var t = tiles[tIdx];
+        if (!t) continue;
+
+        int cur = Manhattan(t.currentPos, t.correctPos);
+        int br = blankSlot / cols, bc = blankSlot % cols;
+        int newDist = Manhattan(new Vector2Int(bc, br), t.correctPos);
+
+        if (newDist >= cur) continue;                 // strict improvement only
+
+        int improvement = cur - newDist;              // >= 1
+        int score = (newDist * 10) - (improvement * 100);
+        if (tIdx == _lastHintTile) score += 25;       // avoid yo-yo
+
+        if (score < bestScore) { bestScore = score; bestTile = tIdx; }
+    }
+
+    if (bestTile >= 0)
+    {
+        _lastHintTile = bestTile;
+        Vector3 dir = (slotWorldPos[blankSlot] - tiles[bestTile].transform.position).normalized;
+        StartCoroutine(CoHintSlide(tiles[bestTile], dir));
+        return;
+    }
+
+    // 3) Plateau breaker: if nothing improves, choose neighbor with smallest resulting distance
+    bestTile = -1;
+    bestScore = int.MaxValue;
+
+    foreach (int nSlot in neigh)
+    {
+        int tIdx = slotToTile[nSlot];
+        if (tIdx == blankTileIndex) continue;
+
+        int br = blankSlot / cols, bc = blankSlot % cols;
+        int newDist = Manhattan(new Vector2Int(bc, br), tiles[tIdx].correctPos);
+
+        int score = newDist * 10;                     // prefer smaller resulting distance
+        if (tIdx == _lastHintTile) score += 10;       // mild anti-yo-yo
+
+        if (score < bestScore) { bestScore = score; bestTile = tIdx; }
+    }
+
+    if (bestTile >= 0)
+    {
+        _lastHintTile = bestTile;
+        Vector3 dir = (slotWorldPos[blankSlot] - tiles[bestTile].transform.position).normalized;
+        StartCoroutine(CoHintSlide(tiles[bestTile], dir));
+        return;
+    }
+
+    // 4) Final fallback: if rotation is enabled, point at a wrong-rotation-in-correct-slot (again)
+    if (rotationEnabled && rotationQuarterTurns > 1)
+    {
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            if (i == blankTileIndex) continue;
+            if (tileToSlot[i] == i)
+            {
+                var t = tiles[i];
+                if (t && t.MaxRotationSteps > 1 && t.rotationSteps != 0)
+                {
+                    StartCoroutine(CoHintRotate(t));
+                    return;
+                }
+            }
+        }
+    }
+}
+
 
     // Manhattan distance helper
     int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);

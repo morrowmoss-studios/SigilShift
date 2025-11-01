@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21b12eb8a74a843028b5ff513f4edf5e, type: 3}
-  m_Name: New Level Config
+  m_Name: Level_1_Config
   m_EditorClassIdentifier: 
   rows: 3
   cols: 3
-  sourceTexture: {fileID: 2800000, guid: fa7301a0c5ad242f7b9d03b6eb4a8f52, type: 3}
-  tileScale: 0.75
+  sourceTexture: {fileID: 2800000, guid: a9042d6f3803e470ea9de1e0b1801505, type: 3}
+  tileScale: 0.85
   enableRotation: 1
   quarterTurns: 4
   blankIndex: -1
