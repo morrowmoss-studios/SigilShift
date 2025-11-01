@@ -560,6 +560,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         if (pushHistory) undoStack.Push(tileIdx);
 
         blankSlot = oldSlot;
+
+        _lastHintTile = -1;
     }
 
     void MoveTileIntoBlank_Instant(int tileIdx, bool pushHistory)
@@ -677,4 +679,5 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         if (root) Destroy(root);
     }
+    
 }
