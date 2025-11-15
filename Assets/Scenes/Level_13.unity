@@ -171,6 +171,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &184941272
 BoxCollider2D:
@@ -444,6 +446,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &439962563
 BoxCollider2D:
@@ -598,6 +602,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &489317944
 BoxCollider2D:
@@ -1162,6 +1168,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &781707104
 BoxCollider2D:
@@ -1463,6 +1471,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1293764894
 BoxCollider2D:
@@ -1773,7 +1783,7 @@ SpriteRenderer:
   m_SortingLayerID: -2073481699
   m_SortingLayer: 1
   m_SortingOrder: 0
-  m_Sprite: {fileID: -1636418657182412667, guid: 88b6d203bc47f457faf992f5fba338d5, type: 3}
+  m_Sprite: {fileID: 7958386366754612865, guid: 54d2135c55f244faea62b736b2e9f0a2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1836,6 +1846,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1451235571
 BoxCollider2D:
@@ -2155,6 +2167,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1561601248
 BoxCollider2D:
@@ -2410,6 +2424,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1573204415
 BoxCollider2D:
@@ -2631,6 +2647,8 @@ MonoBehaviour:
   tapClip: {fileID: 0}
   tapVolume: 0.6
   tapPitchJitter: {x: 0.98, y: 1.02}
+  longPressSeconds: 0.35
+  allowExplicitRotate: 1
   rotationSteps: 0
 --- !u!61 &1854267264
 BoxCollider2D:
