@@ -15,7 +15,7 @@ MonoBehaviour:
   rows: 3
   cols: 3
   sourceTexture: {fileID: 2800000, guid: 4dac19a7d598c4784ae125ba9fad2780, type: 3}
-  tileScale: 0.8
+  tileScale: 0.75
   enableRotation: 1
   quarterTurns: 4
   blankIndex: -1

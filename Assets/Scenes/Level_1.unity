@@ -342,7 +342,7 @@ MonoBehaviour:
   hintNudge: 8
   hintRotateDeg: 12
   additiveSpriteMaterial: {fileID: 0}
-  glowColor: {r: 0.22745095, g: 0.89622384, b: 0.9529412, a: 1}
+  glowColor: {r: 0.9339623, g: 0.11919187, b: 0.066082224, a: 1}
   glowDuration: 1.4
   glowScalePunch: 0.0533
   glowOrderBoost: 25

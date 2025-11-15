@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rows: 3
   cols: 3
-  sourceTexture: {fileID: 0}
-  tileScale: 0.85
+  sourceTexture: {fileID: 2800000, guid: bb7bd0188c78a4a3d8d5d443e67908d7, type: 3}
+  tileScale: 0.75
   enableRotation: 1
   quarterTurns: 4
   blankIndex: -1
