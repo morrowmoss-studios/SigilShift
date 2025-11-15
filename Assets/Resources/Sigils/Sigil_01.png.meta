@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 0814aaee7a774455cb6252810c5a5491
+guid: 4dac19a7d598c4784ae125ba9fad2780
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2220007587218836576
-    second: Sigil_31_0
+      213: 5675626139562647671
+    second: Sigil_01_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -139,7 +139,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Sigil_31_0
+      name: Sigil_01_0
       rect:
         serializedVersion: 2
         x: 0
@@ -154,8 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 06cc9d2732d0fce10800000000000000
-      internalID: 2220007587218836576
+      spriteID: 770ad8637efd3ce40800000000000000
+      internalID: 5675626139562647671
       vertices: []
       indices: 
       edges: []

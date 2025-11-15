@@ -771,7 +771,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -100, y: 130}
+  m_AnchoredPosition: {x: -75, y: 130}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1872075191
@@ -794,7 +794,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Quit Game?
+  m_text: Exit Level?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
   m_sharedMaterial: {fileID: 2339121532890614860, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}

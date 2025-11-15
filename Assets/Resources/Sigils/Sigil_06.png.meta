@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c866843c2e51640fcad53e74aae7736e
+guid: 44241add845284ae9ac63c3e3903efdb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -70508819873212860
-    second: Sigil_25_0
+      213: 1638175611859786210
+    second: Sigil_06_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -24,7 +24,7 @@ TextureImporter:
     heightScale: 0.25
     normalMapFilter: 0
     flipGreenChannel: 0
-  isReadable: 1
+  isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
@@ -139,7 +139,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Sigil_25_0
+      name: Sigil_06_0
       rect:
         serializedVersion: 2
         x: 0
@@ -154,8 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 446dce51a90850ff0800000000000000
-      internalID: -70508819873212860
+      spriteID: 2e95c902a08fbb610800000000000000
+      internalID: 1638175611859786210
       vertices: []
       indices: 
       edges: []
@@ -173,8 +173,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Sigil_25_0: -70508819873212860
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
