@@ -1,19 +1,22 @@
 fileFormatVersion: 2
-guid: d3b1fc408b2044169b60a4914fcc086e
+guid: 6d92aae1f169d49769db3aa2be38fddc
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4131392004733647260
-    second: SigilShift_num6_0
+      213: -1739148734885762313
+    second: SigilShift_num29_0
   - first:
-      213: -2664843997280317786
-    second: SigilShift_num6_1
+      213: -2088237952338271830
+    second: SigilShift_num29_1
   - first:
-      213: -2610290638614480836
-    second: SigilShift_num6_2
+      213: 7439073216589213549
+    second: SigilShift_num29_2
   - first:
-      213: 7507658980501663886
-    second: SigilShift_num6_3
+      213: -3182164063803739096
+    second: SigilShift_num29_3
+  - first:
+      213: 109325454688624052
+    second: SigilShift_num29_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -148,34 +151,34 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SigilShift_num6_0
+      name: SigilShift_num29_0
       rect:
         serializedVersion: 2
-        x: 152
-        y: 111
-        width: 721
-        height: 826
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 46646f95cd85aa6c0800000000000000
-      internalID: -4131392004733647260
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_num6_1
-      rect:
-        serializedVersion: 2
-        x: 673
+        x: 185
         y: 918
         width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fa6095a07d4dd7e0800000000000000
+      internalID: -1739148734885762313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SigilShift_num29_1
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 272
+        width: 7
         height: 8
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -185,20 +188,42 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6ae4640e082940bd0800000000000000
-      internalID: -2664843997280317786
+      spriteID: aa1636475a61503e0800000000000000
+      internalID: -2088237952338271830
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SigilShift_num6_2
+      name: SigilShift_num29_2
       rect:
         serializedVersion: 2
-        x: 544
-        y: 903
+        x: 20
+        y: 100
+        width: 967
+        height: 781
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6f2ce43da5ec3760800000000000000
+      internalID: 7439073216589213549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SigilShift_num29_3
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 126
         width: 14
-        height: 8
+        height: 16
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -207,20 +232,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c383bdc7e7266cbd0800000000000000
-      internalID: -2610290638614480836
+      spriteID: 824f6ffc4aea6d3d0800000000000000
+      internalID: -3182164063803739096
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SigilShift_num6_3
+      name: SigilShift_num29_4
       rect:
         serializedVersion: 2
-        x: 62
-        y: 841
-        width: 11
-        height: 10
+        x: 639
+        y: 119
+        width: 17
+        height: 19
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -229,8 +254,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e80b293c010903860800000000000000
-      internalID: 7507658980501663886
+      spriteID: 4bd9f9bfbe6648100800000000000000
+      internalID: 109325454688624052
       vertices: []
       indices: 
       edges: []
@@ -248,11 +273,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      SigilShift_num6_0: -4131392004733647260
-      SigilShift_num6_1: -2664843997280317786
-      SigilShift_num6_2: -2610290638614480836
-      SigilShift_num6_3: 7507658980501663886
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
