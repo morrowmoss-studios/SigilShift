@@ -1,13 +1,31 @@
 fileFormatVersion: 2
-guid: 2e7952d9bb66744918ac2ff1d5ce9e1c
+guid: d1efdf3d78b0d46e6bbc7884b647288d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8099584031058132922
-    second: Number_Backplate_0
+      213: 4475770690803919172
+    second: Number_Backplate01_0
   - first:
-      213: -8551586633523993269
-    second: Number_Backplate_1
+      213: 3825920661220072572
+    second: Number_Backplate01_1
+  - first:
+      213: -8304346711202773969
+    second: Number_Backplate01_2
+  - first:
+      213: -3684352011145719642
+    second: Number_Backplate01_3
+  - first:
+      213: -2271038796415756900
+    second: Number_Backplate01_4
+  - first:
+      213: -3193923962879920752
+    second: Number_Backplate01_5
+  - first:
+      213: 1623594302953360570
+    second: Number_Backplate01_6
+  - first:
+      213: -4687901258395383344
+    second: Number_Backplate01_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -142,13 +160,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Number_Backplate_0
+      name: Number_Backplate01_0
       rect:
         serializedVersion: 2
-        x: 104
-        y: 184
-        width: 832
-        height: 594
+        x: 126
+        y: 649
+        width: 6
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -157,19 +175,85 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6408a58bc3f789f80800000000000000
-      internalID: -8099584031058132922
+      spriteID: 449e879cab12d1e30800000000000000
+      internalID: 4475770690803919172
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Number_Backplate_1
+      name: Number_Backplate01_1
       rect:
         serializedVersion: 2
-        x: 590
-        y: 180
+        x: 130
+        y: 77
+        width: 757
+        height: 824
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7c99de1296681530800000000000000
+      internalID: 3825920661220072572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Number_Backplate01_2
+      rect:
+        serializedVersion: 2
+        x: 140
+        y: 463
+        width: 17
+        height: 77
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f24431b1aa801cc80800000000000000
+      internalID: -8304346711202773969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Number_Backplate01_3
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 450
         width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a0d92ccd5d8edcc0800000000000000
+      internalID: -3684352011145719642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Number_Backplate01_4
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 216
+        width: 8
         height: 8
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -179,8 +263,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b45e2dad349a25980800000000000000
-      internalID: -8551586633523993269
+      spriteID: c9512844f36ab70e0800000000000000
+      internalID: -2271038796415756900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Number_Backplate01_5
+      rect:
+        serializedVersion: 2
+        x: 534
+        y: 109
+        width: 39
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0953fe0f317eca3d0800000000000000
+      internalID: -3193923962879920752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Number_Backplate01_6
+      rect:
+        serializedVersion: 2
+        x: 569
+        y: 118
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abc02e69a6a288610800000000000000
+      internalID: 1623594302953360570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Number_Backplate01_7
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 121
+        width: 19
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d98c3f94aa31feb0800000000000000
+      internalID: -4687901258395383344
       vertices: []
       indices: 
       edges: []
