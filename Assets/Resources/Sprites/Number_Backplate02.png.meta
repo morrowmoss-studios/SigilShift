@@ -1,25 +1,10 @@
 fileFormatVersion: 2
-guid: 5697edc4acf0e4e10a231c325d33d258
+guid: 191851db835e841139a0a6d47f1d497d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7791833046517169682
-    second: SigilShift_num2_0
-  - first:
-      213: 2387487344856598851
-    second: SigilShift_num2_1
-  - first:
-      213: -124782083650422565
-    second: SigilShift_num2_2
-  - first:
-      213: -5789362909642482784
-    second: SigilShift_num2_3
-  - first:
-      213: 8733038671524656172
-    second: SigilShift_num2_4
-  - first:
-      213: 5759354952962547043
-    second: SigilShift_num2_5
+      213: 303450095504066059
+    second: Number_Backplate02_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -154,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SigilShift_num2_0
+      name: Number_Backplate02_0
       rect:
         serializedVersion: 2
-        x: 403
-        y: 930
-        width: 8
-        height: 9
+        x: 127
+        y: 123
+        width: 760
+        height: 762
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -169,118 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 21e3ec67fd6222c60800000000000000
-      internalID: 7791833046517169682
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_num2_1
-      rect:
-        serializedVersion: 2
-        x: 238
-        y: 112
-        width: 529
-        height: 764
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3490be7371f022120800000000000000
-      internalID: 2387487344856598851
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_num2_2
-      rect:
-        serializedVersion: 2
-        x: 796
-        y: 367
-        width: 14
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: bd8fea52b5fa44ef0800000000000000
-      internalID: -124782083650422565
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_num2_3
-      rect:
-        serializedVersion: 2
-        x: 763
-        y: 346
-        width: 17
-        height: 14
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0ab10f66b1d08afa0800000000000000
-      internalID: -5789362909642482784
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_num2_4
-      rect:
-        serializedVersion: 2
-        x: 232
-        y: 284
-        width: 7
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c24f9f1f66cf13970800000000000000
-      internalID: 8733038671524656172
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_num2_5
-      rect:
-        serializedVersion: 2
-        x: 274
-        y: 138
-        width: 14
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 36d18bab0d65def40800000000000000
-      internalID: 5759354952962547043
+      spriteID: b06049d0142163400800000000000000
+      internalID: 303450095504066059
       vertices: []
       indices: 
       edges: []
