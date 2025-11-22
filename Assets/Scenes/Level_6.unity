@@ -1604,7 +1604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a233b085d6464fbebf24bd76ffa4aba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  homePopupScene: HomePopup
+  homePopupScene: PopUp_Home
 --- !u!4 &1350696019
 Transform:
   m_ObjectHideFlags: 0
