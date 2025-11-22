@@ -1211,11 +1211,11 @@ RectTransform:
   - {fileID: 1729908640}
   m_Father: {fileID: 1331759103}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000026279879, y: 2947}
-  m_SizeDelta: {x: 1350, y: 7000}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -18, y: 6731.9326}
+  m_SizeDelta: {x: 1465.3818, y: 7848.9326}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &165359470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2458,8 +2458,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1599284718}
   m_HandleRect: {fileID: 1599284717}
   m_Direction: 0
-  m_Value: 0
-  m_Size: 0.9979221
+  m_Value: 0.6533457
+  m_Size: 0.9198968
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2665,7 +2665,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1385188439}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.15745574
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -3616,11 +3616,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 165359469}
-  m_Horizontal: 1
+  m_Horizontal: 0
   m_Vertical: 1
-  m_MovementType: 1
+  m_MovementType: 2
   m_Elasticity: 0.1
-  m_Inertia: 1
+  m_Inertia: 0
   m_DecelerationRate: 0.135
   m_ScrollSensitivity: 1
   m_Viewport: {fileID: 1331759103}
@@ -5526,7 +5526,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8105853077458183187, guid: bab2b10c8e92c4050aac29dd47903066, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -134
+      value: -133.99316
       objectReference: {fileID: 0}
     - target: {fileID: 8105853077458183187, guid: bab2b10c8e92c4050aac29dd47903066, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
