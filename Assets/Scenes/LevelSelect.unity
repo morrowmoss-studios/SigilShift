@@ -2848,8 +2848,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1599284718}
   m_HandleRect: {fileID: 1599284717}
   m_Direction: 0
-  m_Value: 0.57246906
-  m_Size: 0.83050025
+  m_Value: 0.6038171
+  m_Size: 0.88168144
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -3055,7 +3055,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1385188439}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.1412931
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -5306,7 +5306,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1459132381}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1459132383
 Camera:
   m_ObjectHideFlags: 0

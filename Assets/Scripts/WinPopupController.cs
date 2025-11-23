@@ -3,57 +3,89 @@ using UnityEngine.SceneManagement;
 
 public class WinPopupController : MonoBehaviour
 {
-    private int currentLevel;
-    private const int MAX_LEVEL = 30;
+    [Header("Scene Flow")]
+    [SerializeField] private string levelSelectSceneName = "LevelSelect";
+    [SerializeField] private string levelScenePrefix = "Level_";
+    [SerializeField] private int maxLevelNumber = 30;
+
+    [Header("Popup Root Object Name")]
+    [SerializeField] private string popupRootName = "WinPopUp"; 
+    [SerializeField] private int popupSortOrder = 20000;
 
     private void Awake()
     {
-        // Figure out current level from the active (underlying) scene
-        // Active scene is still the level scene, because PopUp_Win is additive.
-        string levelSceneName = SceneManager.GetActiveScene().name;
-
-        currentLevel = ExtractLevelNumber(levelSceneName);
-
-        // Optional: save progress/unlock next
-        int unlocked = PlayerPrefs.GetInt("UnlockedLevel", 1);
-        if (currentLevel + 1 > unlocked && currentLevel < MAX_LEVEL)
-        {
-            PlayerPrefs.SetInt("UnlockedLevel", currentLevel + 1);
-            PlayerPrefs.Save();
-        }
+        MakePopupVisible();
     }
+
+    private void Start()
+    {
+        // Belt + suspenders in case hierarchy shifts on first frame
+        MakePopupVisible();
+    }
+
+    private void MakePopupVisible()
+    {
+        // Find the root GO that actually contains your UI
+        GameObject popupRoot = GameObject.Find(popupRootName);
+
+        if (popupRoot == null)
+        {
+            Debug.LogWarning($"[WinPopupController] Couldn't find '{popupRootName}' in PopUp_Win scene.");
+            return;
+        }
+
+        // 1) Ensure root is active
+        if (!popupRoot.activeSelf)
+            popupRoot.SetActive(true);
+
+        // 2) Ensure all canvases under it are enabled + on top
+        var canvases = popupRoot.GetComponentsInChildren<Canvas>(true);
+        foreach (var c in canvases)
+        {
+            c.enabled = true;
+            c.gameObject.SetActive(true);
+            c.renderMode = RenderMode.ScreenSpaceOverlay;
+            c.worldCamera = null;
+            c.sortingOrder = popupSortOrder;
+        }
+
+        // 3) Fix any CanvasGroup that was saved invisible
+        var groups = popupRoot.GetComponentsInChildren<CanvasGroup>(true);
+        foreach (var g in groups)
+        {
+            g.alpha = 1f;
+            g.interactable = true;
+            g.blocksRaycasts = true;
+            g.ignoreParentGroups = true;
+        }
+
+        Debug.Log("[WinPopupController] Popup forced visible.");
+    }
+
+    // === Button hooks ===
 
     public void OnLevelSelectClicked()
     {
-        // Time.timeScale = 1f; // if you paused time
-        SceneManager.LoadScene("LevelSelect");
+        SceneManager.LoadScene(levelSelectSceneName);
     }
 
     public void OnContinueClicked()
     {
-        // Time.timeScale = 1f; // if you paused time
-
-        if (currentLevel >= MAX_LEVEL)
-        {
-            SceneManager.LoadScene("LevelSelect");
-            return;
-        }
-
-        string nextScene = $"Level_{currentLevel + 1}";
-        SceneManager.LoadScene(nextScene);
+        int cur = GetCurrentLevelNumber();
+        int next = Mathf.Clamp(cur + 1, 1, maxLevelNumber);
+        SceneManager.LoadScene(levelScenePrefix + next);
     }
 
-    private int ExtractLevelNumber(string sceneName)
+    private int GetCurrentLevelNumber()
     {
-        // expects "Level_12" etc.
-        if (sceneName.StartsWith("Level_"))
+        string name = SceneManager.GetActiveScene().name;
+
+        if (name.StartsWith(levelScenePrefix))
         {
-            string numPart = sceneName.Substring("Level_".Length);
-            if (int.TryParse(numPart, out int n))
-                return n;
+            string numStr = name.Substring(levelScenePrefix.Length);
+            if (int.TryParse(numStr, out int n)) return n;
         }
 
-        Debug.LogWarning($"Could not parse level number from scene name: {sceneName}. Defaulting to 1.");
         return 1;
     }
 }

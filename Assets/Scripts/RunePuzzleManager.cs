@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Text;
 
 [DisallowMultipleComponent]
 public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
@@ -90,8 +92,70 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField, Range(0f, 1f)]     float glowMaxAlpha  = 1f;
     [SerializeField] AnimationCurve glowScaleCurve = null;
     [SerializeField] AnimationCurve glowAlphaCurve = null;
+    
+    // ===== Win Popup / Progress =====
+    [Header("Win Popup")]
+    [SerializeField] private string winPopupSceneName = "PopUp_Win";
+    [SerializeField] private bool loadPopupAdditive = true;
+    [SerializeField] private float popupDelayAfterSolve = 0.1f;
+    private bool _popupShowing = false;
+
+    [Header("Level Flow")]
+    [SerializeField] private string levelSelectSceneName = "LevelSelect";
+    [SerializeField] private string levelScenePrefix = "Level_";
+    [SerializeField] private int maxLevelNumber = 30;
+// ====================================
 
     private AudioSource _audio;
+ 
+    private void DumpPopupDiagnostics()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("=== POPUP DIAGNOSTICS ===");
+
+        // list all loaded scenes
+        sb.AppendLine($"Loaded scenes: {SceneManager.sceneCount}");
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            var sc = SceneManager.GetSceneAt(i);
+            sb.AppendLine($" - {sc.name} (loaded={sc.isLoaded})");
+        }
+
+        // find popup scene root objects
+        var popupScene = SceneManager.GetSceneByName("PopUp_Win");
+        sb.AppendLine($"PopUp_Win loaded? {popupScene.isLoaded}");
+
+        if (popupScene.isLoaded)
+        {
+            var roots = popupScene.GetRootGameObjects();
+            sb.AppendLine($"PopUp_Win roots: {roots.Length}");
+            foreach (var r in roots)
+            {
+                sb.AppendLine($"  Root: {r.name} active={r.activeInHierarchy} scale={r.transform.localScale}");
+            }
+        }
+
+        // list all canvases in the game
+        var canvases = FindObjectsOfType<Canvas>(true);
+        sb.AppendLine($"All canvases in game: {canvases.Length}");
+        foreach (var c in canvases)
+        {
+            sb.AppendLine(
+                $"Canvas '{c.name}' | enabled={c.enabled} active={c.gameObject.activeInHierarchy} " +
+                $"renderMode={c.renderMode} sortOrder={c.sortingOrder} " +
+                $"worldCam={(c.worldCamera ? c.worldCamera.name : "null")} " +
+                $"scale={c.transform.localScale}"
+            );
+
+            // check for canvas groups on canvas root
+            var cg = c.GetComponent<CanvasGroup>();
+            if (cg)
+                sb.AppendLine($"   CanvasGroup alpha={cg.alpha} interact={cg.interactable} blocksRaycasts={cg.blocksRaycasts}");
+        }
+
+        Debug.Log(sb.ToString());
+    }
+
 
     void Awake()
     {
@@ -642,9 +706,37 @@ public void ShowHint()
 
     void OnSolved()
     {
+        if (_popupShowing) return;
+        _popupShowing = true;
+        
         Debug.Log("<color=#9cffb0>[SigilShift] Puzzle solved!</color>");
         PlaySolvedSfx();
-        StartCoroutine(CoSolveGlow());
+        StartCoroutine(CoSolvedSequence());
+        Invoke(nameof(DumpPopupDiagnostics), 0.1f);
+
+    }
+    
+    IEnumerator CoSolvedSequence()
+    {
+        // 1) Let your existing glow play fully
+        yield return StartCoroutine(CoSolveGlow());
+
+        // 2) Small beat after glow (realtime so popup pausing won't freeze it)
+        if (popupDelayAfterSolve > 0f)
+            yield return new WaitForSecondsRealtime(popupDelayAfterSolve);
+
+        // 3) Show popup
+        ShowWinPopup();
+    }
+    
+    private void ShowWinPopup()
+    {
+        if (string.IsNullOrEmpty(winPopupSceneName)) return;
+
+        if (loadPopupAdditive)
+            SceneManager.LoadScene(winPopupSceneName, LoadSceneMode.Additive);
+        else
+            SceneManager.LoadScene(winPopupSceneName);
     }
 
     void PlaySlideSfx()
@@ -738,5 +830,38 @@ public void ShowHint()
 
         if (root) Destroy(root);
     }
+    
+    public void ReturnToLevelSelect()
+    {
+        if (loadPopupAdditive && SceneManager.GetSceneByName(winPopupSceneName).isLoaded)
+            SceneManager.UnloadSceneAsync(winPopupSceneName);
+
+        SceneManager.LoadScene(levelSelectSceneName);
+    }
+
+    public void LoadNextLevel()
+    {
+        int cur = GetCurrentLevelNumber();
+        int next = Mathf.Clamp(cur + 1, 1, maxLevelNumber);
+
+        if (loadPopupAdditive && SceneManager.GetSceneByName(winPopupSceneName).isLoaded)
+            SceneManager.UnloadSceneAsync(winPopupSceneName);
+
+        SceneManager.LoadScene(levelScenePrefix + next);
+    }
+
+    int GetCurrentLevelNumber()
+    {
+        string name = SceneManager.GetActiveScene().name;
+
+        if (name.StartsWith(levelScenePrefix))
+        {
+            string numStr = name.Substring(levelScenePrefix.Length);
+            if (int.TryParse(numStr, out int n)) return n;
+        }
+
+        return 1; // fallback if name is weird
+    }
+
     
 }
