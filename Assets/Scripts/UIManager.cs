@@ -58,7 +58,7 @@ public class UIManager : MonoBehaviour
         // --- Dropdown setup (TMP) ---
         if (sizeTMPDropdown)
         {
-            var labels = new List<string> { "3 × 3", "6 × 6", "9 × 9" };
+            var labels = new List<string> { "3 X 3", "5 X 5", "7 X 7" };
             sizeTMPDropdown.ClearOptions();
             sizeTMPDropdown.AddOptions(labels);
             sizeTMPDropdown.onValueChanged.AddListener(OnSizeChanged_TMP);
@@ -69,7 +69,7 @@ public class UIManager : MonoBehaviour
 
         // --- Load saved prefs ---
         int  savedIndex = PlayerPrefs.GetInt(PP_SIZE_INDEX, 0); // 0=3x3 default
-        bool savedRot   = PlayerPrefs.GetInt(PP_ROTATION, 1) == 1;
+        bool savedRot   = PlayerPrefs.GetInt(PP_ROTATION, 0) == 1; // off default
         bool savedSfx   = PlayerPrefs.GetInt(PP_SFX, 1) == 1;
 
         if (sizeTMPDropdown) sizeTMPDropdown.SetValueWithoutNotify(savedIndex);
@@ -120,8 +120,8 @@ public class UIManager : MonoBehaviour
         int newSize = 3;
         switch (Mathf.Clamp(sizeIndex, 0, 2))
         {
-            case 1: newSize = 6; break;
-            case 2: newSize = 9; break;
+            case 1: newSize = 5; break;
+            case 2: newSize = 7; break;
         }
 
         // update board + manager
@@ -166,7 +166,7 @@ public class UIManager : MonoBehaviour
     // -------------------------------------------------------------
     int GetCurrentSizeIndex() => sizeTMPDropdown ? sizeTMPDropdown.value : 0;
 
-    bool GetCurrentRotation() => rotationToggle ? rotationToggle.isOn : true;
+    bool GetCurrentRotation() => rotationToggle ? rotationToggle.isOn : false; // default to off
 
     // -------------------------------------------------------------
     //  Save + Button convenience

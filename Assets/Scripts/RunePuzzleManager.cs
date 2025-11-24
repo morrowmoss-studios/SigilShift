@@ -25,7 +25,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // ---------- NEW: Rotation options ----------
     [Header("Rotation")]
     [Tooltip("Allow tiles to rotate when clicked if not adjacent to the blank.")]
-    public bool rotationEnabled = true;
+    public bool rotationEnabled = false;  //default to off
 
     [Tooltip("How many 90° steps per full turn. 1 = disabled, 2 = 180° only, 4 = 90° steps.")]
     [Range(1, 8)] public int rotationQuarterTurns = 4;

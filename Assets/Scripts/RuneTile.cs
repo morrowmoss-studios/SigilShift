@@ -329,8 +329,6 @@ if (leftUpThis)
     // Lightweight check so we don’t need to reference concrete manager type
     bool GetRotationEnabledFromManager()
     {
-        // If your ISlidingPuzzle does not expose this, it’s fine:
-        // returning true just uses RotateOnce harmlessly.
         try
         {
             var m = manager as MonoBehaviour;
@@ -340,7 +338,7 @@ if (leftUpThis)
                 return (bool)fi.GetValue(m);
         }
         catch { /* ignore */ }
-        return true;
+        return false;
     }
     
     bool PointerOverSelf(Vector2 screenPos)

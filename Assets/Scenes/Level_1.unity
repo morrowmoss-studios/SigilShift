@@ -325,7 +325,7 @@ MonoBehaviour:
   blankTileIndex: 8
   shuffleOnStart: 1
   shuffleSteps: 90
-  rotationEnabled: 1
+  rotationEnabled: 0
   rotationQuarterTurns: 4
   randomizeRotationOnShuffle: 1
   fixRotationsOnAutoSolve: 1
