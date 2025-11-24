@@ -712,22 +712,29 @@ public void ShowHint()
         Debug.Log("<color=#9cffb0>[SigilShift] Puzzle solved!</color>");
         PlaySolvedSfx();
         StartCoroutine(CoSolvedSequence());
-        Invoke(nameof(DumpPopupDiagnostics), 0.1f);
 
     }
     
     IEnumerator CoSolvedSequence()
     {
-        // 1) Let your existing glow play fully
+        // 1) Let glow play fully
         yield return StartCoroutine(CoSolveGlow());
 
-        // 2) Small beat after glow (realtime so popup pausing won't freeze it)
+        // 2) Small beat after glow
         if (popupDelayAfterSolve > 0f)
             yield return new WaitForSecondsRealtime(popupDelayAfterSolve);
 
+        Debug.Log("[SigilShift] About to load win popup: " + winPopupSceneName);
+
         // 3) Show popup
-        ShowWinPopup();
+        SceneManager.LoadScene(winPopupSceneName, LoadSceneMode.Additive);
+
+        // wait 1 frame so Unity actually finishes loading
+        yield return null;
+
+        DumpPopupDiagnostics();
     }
+
     
     private void ShowWinPopup()
     {
