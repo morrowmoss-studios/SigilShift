@@ -24,6 +24,10 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [Tooltip("How many random valid moves to do when shuffling.")]
     public int shuffleSteps = 90;
 
+    [Header("Start Behavior")] [SerializeField]
+    private bool waitForTapToStart = true;
+    private bool _waitingForFirstTap = false;
+
     // ---------- NEW: Rotation options ----------
     [Header("Rotation")]
     [Tooltip("Allow tiles to rotate when clicked if not adjacent to the blank.")]
@@ -235,16 +239,56 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         blankSlot = blankTileIndex;
         ApplyBlankVisualState(hide: true);
         undoStack.Clear();
+        _lastHintTile = -1;
+        _lastPlayerTile = -1;
+        _lastPlayerBlankSlot = -1;
 
         if (shuffleOnStart)
-            ShuffleRandomWalk(shuffleSteps);
+        {
+            if (waitForTapToStart)
+            {
+                // Board is already in solved layout from above.
+                // Just wait for the first tap before shuffling.
+                _waitingForFirstTap = true;
+                busy = true;  // block tile moves until we actually shuffle
+                Debug.Log("[RunePuzzleManager] Waiting for first tap to shuffle puzzle.");
+            }
+            else
+            {
+                // Old behavior: shuffle immediately on start
+                ShuffleRandomWalk(shuffleSteps);
+            }
+        }
+
     }
 
     void Update()
     {
+        // First-tap-to-start logic
+        if (_waitingForFirstTap)
+        {
+#if UNITY_ANDROID || UNITY_IOS
+        bool tapped = Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began;
+#else
+            bool tapped = Input.GetMouseButtonDown(0);
+#endif
+
+            if (tapped)
+            {
+                _waitingForFirstTap = false;
+                busy = false; // allow ShuffleRandomWalk to run
+                ShuffleRandomWalk(shuffleSteps);
+                Debug.Log("[RunePuzzleManager] First tap detected — puzzle shuffled.");
+            }
+
+            // While we haven’t started, ignore debug keys below
+            return;
+        }
+
+        // existing debug keys
         if (Input.GetKeyDown(KeyCode.R)) ResetToSolved();
         if (Input.GetKeyDown(KeyCode.S)) ShuffleRandomWalk(shuffleSteps);
-        if (Input.GetKeyDown(KeyCode.A)) AutoSolve();   // rewind the shuffle
+        if (Input.GetKeyDown(KeyCode.A)) AutoSolve();
         if (Input.GetKeyDown(KeyCode.T))
         {
             var rng = new System.Random();
@@ -258,7 +302,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             Debug.Log("🔄 Randomized tile rotations");
         }
     }
-
+    
     // ===============================
     // ISlidingPuzzle (called by RuneTile on click)
     // ===============================
