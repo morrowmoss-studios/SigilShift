@@ -1863,7 +1863,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9ee1d98198d24000a37699b550be9f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sizeTMPDropdown: {fileID: 0}
+  sizeTMPDropdown: {fileID: 345711442}
   rotationToggle: {fileID: 137656717}
   sfxToggle: {fileID: 1853511824}
   puzzleManager: {fileID: 0}

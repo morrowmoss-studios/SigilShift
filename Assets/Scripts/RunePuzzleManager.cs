@@ -113,65 +113,76 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     private AudioSource _audio;
     
     void Awake()
+{
+    if (!loader)
+        loader = GetComponentInParent<RuneBoardLoader>() ?? FindObjectOfType<RuneBoardLoader>();
+
+    if (!loader)
     {
-        if (!loader)
-            loader = GetComponentInParent<RuneBoardLoader>() ?? FindObjectOfType<RuneBoardLoader>();
-
-        if (!loader)
-        {
-            Debug.LogError("[RunePuzzleManager] No RuneBoardLoader found/assigned.");
-            enabled = false; 
-            return;
-        }
-        // 1) Start from config defaults (so editor is still meaningful)
-        if (loader.config)
-        {
-            rotationEnabled      = loader.config.enableRotation;
-            rotationQuarterTurns = Mathf.Max(1, loader.config.quarterTurns);
-        }
-
-        // 2) Override from PlayerPrefs (REAL truth)
-        int rotPref = PlayerPrefs.GetInt(PP_ROTATION, 0);  // 0 = OFF by default
-        bool rotOn  = rotPref == 1;
-
-        rotationEnabled      = rotOn;
-        rotationQuarterTurns = rotOn ? 4 : 1;
-
-        // keep config in sync with the live setting
-        if (loader.config)
-        {
-            loader.config.enableRotation = rotOn;
-            loader.config.quarterTurns   = rotationQuarterTurns;
-        }
-        
-        Debug.Log($"[RunePuzzleManager] Awake AFTER prefs: rotationEnabled={rotationEnabled}, quarterTurns={rotationQuarterTurns}");
-        
-        tiles = loader.tiles;
-        int need = rows * cols;
-        if (tiles == null || tiles.Length != need)
-        {
-            Debug.LogError($"[RunePuzzleManager] loader.tiles must have {need} entries (TL→BR).");
-            enabled = false; return;
-        }
-
-        for (int i = 0; i < tiles.Length; i++)
-        {
-            if (!tiles[i]) { Debug.LogError($"[RunePuzzleManager] loader.tiles[{i}] is null."); enabled = false; return; }
-            tiles[i].manager = this;
-        }
-        
-        for (int i = 0; i < tiles.Length; i++)
-            tiles[i].InitRotationSystem(rotationEnabled ? rotationQuarterTurns : 1);
-
-        _audio = GetComponent<AudioSource>();
-        if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
-        _audio.playOnAwake = false;
-        _audio.loop = false;
-        _audio.spatialBlend = 0f; // 2D
-        
-        Debug.Log($"[RunePuzzleManager] Awake settings: row={rows} cols={cols} rotationEnabled={rotationEnabled} quarterTurns={rotationQuarterTurns}");
+        Debug.LogError("[RunePuzzleManager] No RuneBoardLoader found/assigned.");
+        enabled = false; 
+        return;
     }
 
+    // 1) Start from config defaults (so editor is still meaningful)
+    if (loader.config)
+    {
+        // sync board size first (Bootstrap already set these based on prefs)
+        rows = loader.config.rows;
+        cols = loader.config.cols;
+
+        rotationEnabled      = loader.config.enableRotation;
+        rotationQuarterTurns = Mathf.Max(1, loader.config.quarterTurns);
+    }
+
+    // 2) Override from PlayerPrefs (REAL truth)
+    int rotPref = PlayerPrefs.GetInt(PP_ROTATION, 0);  // 0 = OFF by default
+    bool rotOn  = rotPref == 1;
+
+    rotationEnabled      = rotOn;
+    rotationQuarterTurns = rotOn ? 4 : 1;
+
+    if (loader.config)
+    {
+        loader.config.enableRotation = rotOn;
+        loader.config.quarterTurns   = rotationQuarterTurns;
+    }
+
+    Debug.Log($"[RunePuzzleManager] Awake AFTER prefs: rotationEnabled={rotationEnabled}, quarterTurns={rotationQuarterTurns}");
+
+    tiles = loader.tiles;
+    int need = rows * cols;
+    if (tiles == null || tiles.Length != need)
+    {
+        Debug.LogError($"[RunePuzzleManager] loader.tiles must have {need} entries (TL→BR).");
+        enabled = false; return;
+    }
+
+    for (int i = 0; i < tiles.Length; i++)
+    {
+        if (!tiles[i]) { Debug.LogError($"[RunePuzzleManager] loader.tiles[{i}] is null."); enabled = false; return; }
+        tiles[i].manager = this;
+    }
+
+    for (int i = 0; i < tiles.Length; i++)
+        tiles[i].InitRotationSystem(rotationEnabled ? rotationQuarterTurns : 1);
+
+    // blank tile logic (what you already added)
+    if (loader.config && loader.config.blankIndex >= 0)
+        blankTileIndex = loader.config.blankIndex;
+    else
+        blankTileIndex = (rows * cols) - 1;
+
+    _audio = GetComponent<AudioSource>();
+    if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
+    _audio.playOnAwake = false;
+    _audio.loop = false;
+    _audio.spatialBlend = 0f;
+
+    Debug.Log($"[RunePuzzleManager] Awake settings: row={rows} cols={cols} rotationEnabled={rotationEnabled} quarterTurns={rotationQuarterTurns}");
+}
+
+    
     IEnumerator Start()
     {
         yield return null;

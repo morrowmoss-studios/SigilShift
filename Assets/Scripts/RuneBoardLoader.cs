@@ -130,11 +130,6 @@ public class RuneBoardLoader : MonoBehaviour
 
             t.InitRotationSystem(qTurns);
             
-
-            // rotation system init if manager uses it later
-            if (config) t.InitRotationSystem(config.enableRotation ? Mathf.Max(1, config.quarterTurns) : 1);
-            else        t.InitRotationSystem(1);
-
             // plate & shadow sized to the scaled tile
             BuildPlateAndShadow(t.transform, tileWorld, ppu, scale);
         }

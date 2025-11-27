@@ -1,60 +1,63 @@
 using UnityEngine;
-using System.Reflection;
 
 public class GameSettingsBootstrap : MonoBehaviour
 {
-    void Start()
-    {
-        // Read saved prefs
-        int  sizeIdx = PlayerPrefs.GetInt("SS_PuzzleSizeIndex", 0); // 0=3x3,1=6x6,2=9x9
-        bool rotOn   = PlayerPrefs.GetInt("SS_RotationEnabled", 1) == 1;
-        bool sfxOn   = PlayerPrefs.GetInt("SS_SFXEnabled", 1) == 1;
+    // Match UIManager keys
+    private const string PP_SIZE_INDEX = "SS_PuzzleSizeIndex";
+    private const string PP_ROTATION   = "SS_RotationEnabled";
+    private const string PP_SFX        = "SS_SFXEnabled";
 
-        // Map index -> size
+    [SerializeField] private RuneBoardLoader loader;
+
+    void Awake()
+    {
+        // --- Read saved prefs for board + rotation ---
+        int  sizeIdx = PlayerPrefs.GetInt(PP_SIZE_INDEX, 0);   // 0=3x3, 1=5x5, 2=7x7
+        bool rotOn   = PlayerPrefs.GetInt(PP_ROTATION, 0) == 1;
+
+        // Map index -> board size
         int size = 3;
         switch (Mathf.Clamp(sizeIdx, 0, 2))
         {
-            case 1: size = 6; break;
-            case 2: size = 9; break;
+            case 1: size = 5; break;
+            case 2: size = 7; break;
         }
+
+        // Find loader if not wired in Inspector
+        if (!loader)
+            loader = FindObjectOfType<RuneBoardLoader>();
+
+        if (!loader)
+        {
+            Debug.LogError("[Bootstrap] No RuneBoardLoader found in scene.");
+            return;
+        }
+
+        // Push settings into LevelConfig BEFORE RunePuzzleManager.Awake / loader.Start
+        if (loader.config)
+        {
+            loader.config.rows = size;
+            loader.config.cols = size;
+
+            loader.config.enableRotation = rotOn;
+            loader.config.quarterTurns   = rotOn ? 4 : 1;
+        }
+        
+        DontDestroyOnLoad(gameObject);
+
+        Debug.Log($"[Bootstrap] Awake -> applied config rows/cols={size}x{size}, rotation={rotOn}");
+    }
+
+    void Start()
+    {
+        // --- Optional: apply SFX mute once the manager exists ---
+        bool sfxOn = PlayerPrefs.GetInt(PP_SFX, 1) == 1;
 
         var manager = FindObjectOfType<RunePuzzleManager>();
-        var loader  = FindObjectOfType<RuneBoardLoader>();
-
-        if (manager && loader)
+        if (manager)
         {
-            // apply dims + rotation
-            manager.rows = size;
-            manager.cols = size;
-            manager.rotationEnabled      = rotOn;
-            manager.rotationQuarterTurns = rotOn ? 4 : 1;
-
-            if (loader.config)
-            {
-                loader.config.rows = size;
-                loader.config.cols = size;
-                loader.config.enableRotation = rotOn;
-                loader.config.quarterTurns   = rotOn ? 4 : 1;
-            }
-
-            // If you implemented Loader.RebuildBoard(r,c), call it
-            MethodInfo rebuild = typeof(RuneBoardLoader).GetMethod(
-                "RebuildBoard", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (rebuild != null && rebuild.GetParameters().Length == 2)
-            {
-                rebuild.Invoke(loader, new object[] { size, size });
-            }
-
-            manager.ResetToSolved();
-            manager.ShuffleRandomWalk(manager.shuffleSteps);
-
-            // ---- NEW: apply SFX mute via manager helper (no tags, no clip names)
             manager.ApplySfxMute(!sfxOn);
-        }
-        else
-        {
-            // If manager isn't present yet, at least set Time.timeScale etc. if you ever need to.
-            // SFX mute will be applied once the manager exists (UIManager also calls it when available).
+            Debug.Log($"[Bootstrap] Start -> applied SFX mute = {!sfxOn}");
         }
     }
 }

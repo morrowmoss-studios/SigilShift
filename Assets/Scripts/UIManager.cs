@@ -68,10 +68,12 @@ public class UIManager : MonoBehaviour
         if (sfxToggle)      sfxToggle.onValueChanged.AddListener(OnSFXToggled);
 
         // --- Load saved prefs ---
-        int  savedIndex = PlayerPrefs.GetInt(PP_SIZE_INDEX, 0); // 0=3x3 default
-        bool savedRot   = PlayerPrefs.GetInt(PP_ROTATION, 0) == 1; // off default
+        int  savedIndex = PlayerPrefs.GetInt(PP_SIZE_INDEX, 0);
+        bool savedRot   = PlayerPrefs.GetInt(PP_ROTATION, 0) == 1;
         bool savedSfx   = PlayerPrefs.GetInt(PP_SFX, 1) == 1;
 
+        Debug.Log($"[UI] Start -> loaded prefs sizeIndex={savedIndex}, rot={savedRot}, sfx={savedSfx}");
+        
         if (sizeTMPDropdown) sizeTMPDropdown.SetValueWithoutNotify(savedIndex);
         if (rotationToggle)  rotationToggle.SetIsOnWithoutNotify(savedRot);
         if (sfxToggle)       sfxToggle.SetIsOnWithoutNotify(savedSfx);
@@ -173,19 +175,30 @@ public class UIManager : MonoBehaviour
     // -------------------------------------------------------------
     public void SaveCurrentSettings()
     {
-        PlayerPrefs.SetInt(PP_SIZE_INDEX, GetCurrentSizeIndex());
-        PlayerPrefs.SetInt(PP_ROTATION,   GetCurrentRotation() ? 1 : 0);
+        int indexFromDropdown = sizeTMPDropdown ? sizeTMPDropdown.value : -1;
 
-        if (sfxToggle) PlayerPrefs.SetInt(PP_SFX, sfxToggle.isOn ? 1 : 0);
+        int sizeIndex = GetCurrentSizeIndex();
+        bool rotOn    = GetCurrentRotation();
+        bool sfxOn    = sfxToggle ? sfxToggle.isOn : true;
+
+        Debug.Log($"[UI] SaveCurrentSettings -> " +
+                  $"sizeIndex={sizeIndex}, dropdownRef={(sizeTMPDropdown ? sizeTMPDropdown.name : "NULL")}, " +
+                  $"dropdownValue={indexFromDropdown}, rotOn={rotOn}, sfxOn={sfxOn}");
+
+        PlayerPrefs.SetInt(PP_SIZE_INDEX, sizeIndex);
+        PlayerPrefs.SetInt(PP_ROTATION,   rotOn ? 1 : 0);
+        PlayerPrefs.SetInt(PP_SFX,        sfxOn ? 1 : 0);
 
         PlayerPrefs.Save();
     }
-
+    
     public void ConfirmAndGo(string sceneName)
     {
+        Debug.Log("[UI] ConfirmAndGo called, saving settings then loading " + sceneName);
         SaveCurrentSettings();
         LoadScene(sceneName);
     }
+
 
     public void CancelAndGo(string sceneName)
     {
