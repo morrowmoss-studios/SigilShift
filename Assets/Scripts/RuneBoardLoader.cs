@@ -61,11 +61,19 @@ public class RuneBoardLoader : MonoBehaviour
         }
 
         int need = rows * cols;
-        if (tiles == null || tiles.Length != need)
+
+        // We just need AT LEAST 'need' tiles; extras are allowed.
+        if (tiles == null || tiles.Length < need)
         {
-            Debug.LogError($"[Loader] tiles[] must have {need} entries (TL→BR). Found: {(tiles == null ? 0 : tiles.Length)}");
+            Debug.LogError($"[Loader] tiles[] must have AT LEAST {need} entries (TL→BR). Found: {(tiles == null ? 0 : tiles.Length)}");
             return;
         }
+
+        if (tiles.Length > need)
+        {
+            Debug.LogWarning($"[Loader] tiles[] has {tiles.Length} entries; using only first {need} for a {rows}x{cols} board.");
+        }
+
 
         // Base size from first sprite
         float ppu  = sprites[0].pixelsPerUnit;
@@ -90,7 +98,7 @@ public class RuneBoardLoader : MonoBehaviour
             0f);
 
         // Layout tiles
-        for (int i = 0; i < tiles.Length; i++)
+        for (int i = 0; i < need; i++)
         {
             var t = tiles[i];
             if (!t) { Debug.LogWarning($"[Loader] Tile {i} missing"); continue; }

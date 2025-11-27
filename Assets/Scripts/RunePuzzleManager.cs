@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Text;
+using System;
+using Random = UnityEngine.Random;
 
 [DisallowMultipleComponent]
 public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
@@ -152,11 +154,25 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
     tiles = loader.tiles;
     int need = rows * cols;
-    if (tiles == null || tiles.Length != need)
+
+// Need *at least* N tiles
+    if (tiles == null || tiles.Length < need)
     {
-        Debug.LogError($"[RunePuzzleManager] loader.tiles must have {need} entries (TL→BR).");
-        enabled = false; return;
+        Debug.LogError($"[RunePuzzleManager] loader.tiles must have AT LEAST {need} entries (TL→BR). Found {(tiles == null ? 0 : tiles.Length)}.");
+        enabled = false;
+        return;
     }
+
+// If there are extra tiles (e.g. 25 in the array but 3x3 needs 9),
+// trim to the first 'need' so the manager only cares about the active ones.
+    if (tiles.Length > need)
+    {
+        Debug.LogWarning($"[RunePuzzleManager] loader.tiles has {tiles.Length} entries; using only first {need} for a {rows}x{cols} board.");
+        var trimmed = new RuneTile[need];
+        Array.Copy(tiles, trimmed, need);
+        tiles = trimmed;
+    }
+
 
     for (int i = 0; i < tiles.Length; i++)
     {

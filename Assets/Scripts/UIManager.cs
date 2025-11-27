@@ -58,7 +58,7 @@ public class UIManager : MonoBehaviour
         // --- Dropdown setup (TMP) ---
         if (sizeTMPDropdown)
         {
-            var labels = new List<string> { "3 X 3", "5 X 5", "7 X 7" };
+            var labels = new List<string> { "3 X 3", "4 X 4", "5 X 5" };
             sizeTMPDropdown.ClearOptions();
             sizeTMPDropdown.AddOptions(labels);
             sizeTMPDropdown.onValueChanged.AddListener(OnSizeChanged_TMP);
@@ -122,8 +122,8 @@ public class UIManager : MonoBehaviour
         int newSize = 3;
         switch (Mathf.Clamp(sizeIndex, 0, 2))
         {
-            case 1: newSize = 5; break;
-            case 2: newSize = 7; break;
+            case 1: newSize = 4; break;
+            case 2: newSize = 5; break;
         }
 
         // update board + manager

@@ -19,8 +19,8 @@ public class GameSettingsBootstrap : MonoBehaviour
         int size = 3;
         switch (Mathf.Clamp(sizeIdx, 0, 2))
         {
-            case 1: size = 5; break;
-            case 2: size = 7; break;
+            case 1: size = 4; break;
+            case 2: size = 5; break;
         }
 
         // Find loader if not wired in Inspector
