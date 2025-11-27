@@ -69,6 +69,7 @@ public class RuneTile : MonoBehaviour
         _audio.loop = false;
         _audio.spatialBlend = 0f; // 2D
     }
+    
 
     public void SetSlideTime(float seconds) => slideTime = Mathf.Max(0.01f, seconds);
     public void SetLabel(int id) => gameObject.name = $"Tile_{id}";
@@ -290,6 +291,8 @@ if (leftUpThis)
 
     public void RotateOnce()
     {
+        Debug.Log($"[RuneTile] RotateOnce CALLED on {name} | _maxSteps={_maxSteps} | beforeSteps={rotationSteps}");
+
         if (_maxSteps <= 1) return;
         rotationSteps = (rotationSteps + 1) % _maxSteps;
         ApplyRotationVisual();
@@ -317,14 +320,25 @@ if (leftUpThis)
     // ---- core explicit-rotate path (bypasses adjacency) ----
     void TryExplicitRotate()
     {
+        Debug.Log($"[RuneTile] TryExplicitRotate on {name} | allowExplicitRotate={allowExplicitRotate}");
+
         if (!allowExplicitRotate) return;
-        if (manager == null) return;                   // need to respect game rules
-        // Only rotate if rotation is globally enabled and the tile supports rotation
-        if (!GetRotationEnabledFromManager()) return;
+        if (manager == null)
+        {
+            Debug.Log($"[RuneTile] manager NULL on {name} -> NO rotate");
+            return;
+        }
+
+        bool enabled = GetRotationEnabledFromManager();
+        Debug.Log($"[RuneTile] manager says rotationEnabled={enabled} | MaxRotationSteps={MaxRotationSteps}");
+
+        if (!enabled) return;
         if (MaxRotationSteps <= 1) return;
 
+        Debug.Log($"[RuneTile] EXPLICIT ROTATE FIRED on {name}");
         RotateOnce();
     }
+
 
     // Lightweight check so we don’t need to reference concrete manager type
     bool GetRotationEnabledFromManager()
@@ -332,14 +346,18 @@ if (leftUpThis)
         try
         {
             var m = manager as MonoBehaviour;
-            if (!m) return true;
-            var fi = m.GetType().GetField("rotationEnabled");
+            if (!m) return false;
+            var fi = m.GetType().GetField("rotationEnabled",
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
             if (fi != null && fi.FieldType == typeof(bool))
                 return (bool)fi.GetValue(m);
         }
-        catch { /* ignore */ }
-        return false;
+        catch { }
+        return false;   
     }
+
     
     bool PointerOverSelf(Vector2 screenPos)
     {

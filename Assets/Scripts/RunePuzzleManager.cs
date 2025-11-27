@@ -32,6 +32,10 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
     [Tooltip("Randomize tile rotations during Shuffle.")]
     public bool randomizeRotationOnShuffle = true;
+   
+    // Must match UIManager's keys
+    private const string PP_ROTATION = "SS_RotationEnabled";
+
 
     // ---------- NEW: Autosolve rotation correction ----------
     [Header("Autosolve")]
@@ -107,56 +111,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 // ====================================
 
     private AudioSource _audio;
- 
-    private void DumpPopupDiagnostics()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("=== POPUP DIAGNOSTICS ===");
-
-        // list all loaded scenes
-        sb.AppendLine($"Loaded scenes: {SceneManager.sceneCount}");
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-        {
-            var sc = SceneManager.GetSceneAt(i);
-            sb.AppendLine($" - {sc.name} (loaded={sc.isLoaded})");
-        }
-
-        // find popup scene root objects
-        var popupScene = SceneManager.GetSceneByName("PopUp_Win");
-        sb.AppendLine($"PopUp_Win loaded? {popupScene.isLoaded}");
-
-        if (popupScene.isLoaded)
-        {
-            var roots = popupScene.GetRootGameObjects();
-            sb.AppendLine($"PopUp_Win roots: {roots.Length}");
-            foreach (var r in roots)
-            {
-                sb.AppendLine($"  Root: {r.name} active={r.activeInHierarchy} scale={r.transform.localScale}");
-            }
-        }
-
-        // list all canvases in the game
-        var canvases = FindObjectsOfType<Canvas>(true);
-        sb.AppendLine($"All canvases in game: {canvases.Length}");
-        foreach (var c in canvases)
-        {
-            sb.AppendLine(
-                $"Canvas '{c.name}' | enabled={c.enabled} active={c.gameObject.activeInHierarchy} " +
-                $"renderMode={c.renderMode} sortOrder={c.sortingOrder} " +
-                $"worldCam={(c.worldCamera ? c.worldCamera.name : "null")} " +
-                $"scale={c.transform.localScale}"
-            );
-
-            // check for canvas groups on canvas root
-            var cg = c.GetComponent<CanvasGroup>();
-            if (cg)
-                sb.AppendLine($"   CanvasGroup alpha={cg.alpha} interact={cg.interactable} blocksRaycasts={cg.blocksRaycasts}");
-        }
-
-        Debug.Log(sb.ToString());
-    }
-
-
+    
     void Awake()
     {
         if (!loader)
@@ -165,9 +120,32 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         if (!loader)
         {
             Debug.LogError("[RunePuzzleManager] No RuneBoardLoader found/assigned.");
-            enabled = false; return;
+            enabled = false; 
+            return;
+        }
+        // 1) Start from config defaults (so editor is still meaningful)
+        if (loader.config)
+        {
+            rotationEnabled      = loader.config.enableRotation;
+            rotationQuarterTurns = Mathf.Max(1, loader.config.quarterTurns);
         }
 
+        // 2) Override from PlayerPrefs (REAL truth)
+        int rotPref = PlayerPrefs.GetInt(PP_ROTATION, 0);  // 0 = OFF by default
+        bool rotOn  = rotPref == 1;
+
+        rotationEnabled      = rotOn;
+        rotationQuarterTurns = rotOn ? 4 : 1;
+
+        // keep config in sync with the live setting
+        if (loader.config)
+        {
+            loader.config.enableRotation = rotOn;
+            loader.config.quarterTurns   = rotationQuarterTurns;
+        }
+        
+        Debug.Log($"[RunePuzzleManager] Awake AFTER prefs: rotationEnabled={rotationEnabled}, quarterTurns={rotationQuarterTurns}");
+        
         tiles = loader.tiles;
         int need = rows * cols;
         if (tiles == null || tiles.Length != need)
@@ -181,13 +159,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             if (!tiles[i]) { Debug.LogError($"[RunePuzzleManager] loader.tiles[{i}] is null."); enabled = false; return; }
             tiles[i].manager = this;
         }
-
-        if (loader && loader.config)
-        {
-            rotationEnabled      = loader.config.enableRotation;
-            rotationQuarterTurns = Mathf.Max(1, loader.config.quarterTurns);
-        }
-
+        
         for (int i = 0; i < tiles.Length; i++)
             tiles[i].InitRotationSystem(rotationEnabled ? rotationQuarterTurns : 1);
 
@@ -196,6 +168,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _audio.playOnAwake = false;
         _audio.loop = false;
         _audio.spatialBlend = 0f; // 2D
+        
+        Debug.Log($"[RunePuzzleManager] Awake settings: row={rows} cols={cols} rotationEnabled={rotationEnabled} quarterTurns={rotationQuarterTurns}");
     }
 
     IEnumerator Start()
@@ -265,6 +239,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         // click-to-rotate if not adjacent
         if (!IsAdjacent(tileSlot, blankSlot))
         {
+            Debug.Log($"[RunePuzzleManager] Non-adjacent click on {tile.name}. rotationEnabled={rotationEnabled}, quarterTurns={rotationQuarterTurns}");
+            
             if (rotationEnabled && rotationQuarterTurns > 1)
                 tile.RotateOnce();
             return;
@@ -731,8 +707,6 @@ public void ShowHint()
 
         // wait 1 frame so Unity actually finishes loading
         yield return null;
-
-        DumpPopupDiagnostics();
     }
 
     
