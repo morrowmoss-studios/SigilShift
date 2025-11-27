@@ -86,6 +86,14 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField, Range(0.2f, 1.2f)]  private float hintDuration = 0.65f;
     [SerializeField, Range(2f, 25f)]     private float hintNudge = 8f;       // world-units * 0.001
     [SerializeField, Range(2f, 25f)]     private float hintRotateDeg = 12f;  // ±deg wiggle
+    
+    // ---- Input lock (used by reference popup, win popup, etc.) ----
+    [HideInInspector] public bool inputLocked = false;
+
+    public void SetInputLocked(bool locked)
+    {
+        inputLocked = locked;
+    }
 
     // --------- Solve Glow ----------
     [Header("Solve Glow")]
@@ -256,8 +264,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // ===============================
     public void TrySlideTile(RuneTile tile)
     {
-        if (busy || tile == null) return;
-
+        if (busy || inputLocked || tile == null) return;
+        
         int tileIdx = GetTileIndex(tile);
         if (tileIdx < 0) return;
 
@@ -426,9 +434,9 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
    // ===============================
 //  HINT v2: bigger, clearer, rotation-aware, anti-undo
 // ===============================
-public void ShowHint()
-{
-    if (busy || tiles == null || tiles.Length == 0) return;
+    public void ShowHint()
+    {
+        if (busy || inputLocked || tiles == null || tiles.Length == 0) return;
 
     // 0) If any tile is already in its correct slot but rotated wrong, prefer a rotate hint
     if (rotationEnabled && rotationQuarterTurns > 1)
