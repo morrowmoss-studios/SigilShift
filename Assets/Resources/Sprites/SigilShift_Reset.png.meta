@@ -348,7 +348,15 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      SigilShift_Reset_0: 8424495787233923352
+      SigilShift_Reset_1: 8805352927960996388
+      SigilShift_Reset_2: -5850647160592831040
+      SigilShift_Reset_3: 9202561210298674071
+      SigilShift_Reset_4: -4981868165352687865
+      SigilShift_Reset_5: -4380022838094978773
+      SigilShift_Reset_6: 1293902347532411332
+      SigilShift_Reset_7: 661338569936729598
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

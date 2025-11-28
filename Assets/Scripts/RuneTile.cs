@@ -116,55 +116,80 @@ public class RuneTile : MonoBehaviour
         }
 
         // ---------- INPUT (unified) ----------
-        // We handle:
-        //  - Right-click = rotate
-        //  - Shift + Left-click = rotate
-        //  - Long-press = rotate
-        //  - Simple tap = slide (existing behavior)
+// We handle:
+//  - Right-click = rotate
+//  - Shift + Left-click = rotate
+//  - Long-press = rotate
+//  - Simple tap = slide (existing behavior)
 
 #if ENABLE_INPUT_SYSTEM
-        var mouse   = Mouse.current;
-        var kb      = Keyboard.current;
-        bool hasMouse = (mouse != null);
+        // We support BOTH mouse (Editor / desktop) and touch (phone)
+        var mouse       = Mouse.current;
+        var kb          = Keyboard.current;
+        var touchscreen = Touchscreen.current;
 
-        bool leftDownThis  = hasMouse && mouse.leftButton.wasPressedThisFrame;
-        bool leftUpThis    = hasMouse && mouse.leftButton.wasReleasedThisFrame;
-        bool leftHeld      = hasMouse && mouse.leftButton.isPressed;
-        bool rightDownThis = hasMouse && mouse.rightButton.wasPressedThisFrame;
+        bool hasMouse   = mouse != null;
+        bool hasTouch   = touchscreen != null;
 
-        bool shift = (kb != null) && ((kb.leftShiftKey?.isPressed ?? false) || (kb.rightShiftKey?.isPressed ?? false));
+        bool leftDownThis  = false;
+        bool leftUpThis    = false;
+        bool leftHeld      = false;
+        bool rightDownThis = false;
+        bool shift         = false;
+        Vector2 pointerPos = Vector2.zero;
 
-// --- explicit rotate on right-click or Shift+Left (only if over this tile) ---
-        if (allowExplicitRotate && hasMouse)
+        if (hasMouse)
         {
-            Vector2 pos = mouse.position.ReadValue();
-            if (rightDownThis && PointerOverSelf(pos))
+            // Normal mouse controls (Editor, Mac/PC build)
+            pointerPos    = mouse.position.ReadValue();
+            leftDownThis  = mouse.leftButton.wasPressedThisFrame;
+            leftUpThis    = mouse.leftButton.wasReleasedThisFrame;
+            leftHeld      = mouse.leftButton.isPressed;
+            rightDownThis = mouse.rightButton.wasPressedThisFrame;
+            shift = (kb != null) &&
+                    ((kb.leftShiftKey?.isPressed ?? false) ||
+                     (kb.rightShiftKey?.isPressed ?? false));
+        }
+        else if (hasTouch)
+        {
+            // Treat primary touch as a "left mouse button"
+            var touch      = touchscreen.primaryTouch;
+            pointerPos     = touch.position.ReadValue();
+            leftDownThis   = touch.press.wasPressedThisFrame;
+            leftUpThis     = touch.press.wasReleasedThisFrame;
+            leftHeld       = touch.press.isPressed;
+            rightDownThis  = false;   // no right-click on touch
+            shift          = false;   // no shift on touch
+        }
+
+        // --- explicit rotate on right-click or Shift+Left (only if over this tile) ---
+        if (allowExplicitRotate && hasMouse) // only makes sense with real mouse
+        {
+            if (rightDownThis && PointerOverSelf(pointerPos))
             {
                 TryExplicitRotate();
                 _longPressTriggered = true;
             }
-            else if (leftDownThis && shift && PointerOverSelf(pos))
+            else if (leftDownThis && shift && PointerOverSelf(pointerPos))
             {
                 TryExplicitRotate();
                 _longPressTriggered = true;
             }
         }
 
-// --- long-press detection (only if the press started on this tile) ---
-        if (leftDownThis && hasMouse)
+        // --- long-press detection (only if the press started on this tile) ---
+        if (leftDownThis && (hasMouse || hasTouch))
         {
-            Vector2 pos = mouse.position.ReadValue();
-            _pointerDown = PointerOverSelf(pos);   // only start tracking if down began on this tile
-            _downAt = Time.time;
+            _pointerDown        = PointerOverSelf(pointerPos);
+            _downAt             = Time.time;
             _longPressTriggered = false;
         }
 
-        if (_pointerDown && !_longPressTriggered && leftHeld && allowExplicitRotate && hasMouse)
+        if (_pointerDown && !_longPressTriggered && leftHeld && allowExplicitRotate && (hasMouse || hasTouch))
         {
             if (Time.time - _downAt >= longPressSeconds)
             {
-                Vector2 pos = mouse.position.ReadValue();
-                if (PointerOverSelf(pos))          // still over tile (optional but nice)
+                if (PointerOverSelf(pointerPos))
                 {
                     TryExplicitRotate();
                     _longPressTriggered = true;
@@ -172,70 +197,70 @@ public class RuneTile : MonoBehaviour
             }
         }
 
-        if (leftUpThis && hasMouse)
+        if (leftUpThis && (hasMouse || hasTouch))
         {
-            Vector2 pos = mouse.position.ReadValue();
-            if (!_longPressTriggered && PointerOverSelf(pos))
+            if (!_longPressTriggered && PointerOverSelf(pointerPos))
             {
-                TryHandleClickAtScreenPos(pos);    // treat as slide-tap
+                // treat as slide-tap
+                TryHandleClickAtScreenPos(pointerPos);
             }
             _pointerDown = false;
         }
-        
+
 #else
         // -------- Legacy Input System --------
-       bool leftDownThis  = Input.GetMouseButtonDown(0);
-    bool leftUpThis    = Input.GetMouseButtonUp(0);
-    bool leftHeld      = Input.GetMouseButton(0);
-    bool rightDownThis = Input.GetMouseButtonDown(1);
-    bool shift         = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-    Vector2 mpos       = Input.mousePosition;
+        bool leftDownThis  = Input.GetMouseButtonDown(0);
+        bool leftUpThis    = Input.GetMouseButtonUp(0);
+        bool leftHeld      = Input.GetMouseButton(0);
+        bool rightDownThis = Input.GetMouseButtonDown(1);
+        bool shift         = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        Vector2 mpos       = Input.mousePosition;
 
-// explicit rotate: right click or Shift+Left — only if over this tile
-if (allowExplicitRotate)
-{
-    if (rightDownThis && PointerOverSelf(mpos))
-    {
-        TryExplicitRotate();
-        _longPressTriggered = true;
-    }
-    else if (leftDownThis && shift && PointerOverSelf(mpos))
-    {
-        TryExplicitRotate();
-        _longPressTriggered = true;
-    }
-}
-
-// long-press, only if press began on this tile
-if (leftDownThis)
-{
-    _pointerDown = PointerOverSelf(mpos);
-    _downAt = Time.time;
-    _longPressTriggered = false;
-}
-
-if (_pointerDown && !_longPressTriggered && leftHeld && allowExplicitRotate)
-{
-    if (Time.time - _downAt >= longPressSeconds)
-    {
-        if (PointerOverSelf(mpos))
+        // explicit rotate: right click or Shift+Left — only if over this tile
+        if (allowExplicitRotate)
         {
-            TryExplicitRotate();
-            _longPressTriggered = true;
+            if (rightDownThis && PointerOverSelf(mpos))
+            {
+                TryExplicitRotate();
+                _longPressTriggered = true;
+            }
+            else if (leftDownThis && shift && PointerOverSelf(mpos))
+            {
+                TryExplicitRotate();
+                _longPressTriggered = true;
+            }
         }
-    }
-}
 
-if (leftUpThis)
-{
-    if (!_longPressTriggered && PointerOverSelf(mpos))
-    {
-        TryHandleClickAtScreenPos(mpos);
-    }
-    _pointerDown = false;
-}
+        // long-press, only if press began on this tile
+        if (leftDownThis)
+        {
+            _pointerDown        = PointerOverSelf(mpos);
+            _downAt             = Time.time;
+            _longPressTriggered = false;
+        }
 
+        if (_pointerDown && !_longPressTriggered && leftHeld && allowExplicitRotate)
+        {
+            if (Time.time - _downAt >= longPressSeconds)
+            {
+                if (PointerOverSelf(mpos))
+                {
+                    TryExplicitRotate();
+                    _longPressTriggered = true;
+                }
+            }
+        }
+
+        if (leftUpThis)
+        {
+            if (!_longPressTriggered && PointerOverSelf(mpos))
+            {
+                TryHandleClickAtScreenPos(mpos);
+            }
+            _pointerDown = false;
+        }
 #endif
+
     }
 
     // We keep this method but make it a no-op to avoid double-firing; Update handles clicks.

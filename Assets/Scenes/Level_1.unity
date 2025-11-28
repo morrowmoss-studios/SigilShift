@@ -1085,6 +1085,7 @@ MonoBehaviour:
   blankTileIndex: 8
   shuffleOnStart: 1
   shuffleSteps: 90
+  waitForTapToStart: 1
   rotationEnabled: 0
   rotationQuarterTurns: 4
   randomizeRotationOnShuffle: 1
@@ -1352,7 +1353,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1200, y: 1200}
+  m_SizeDelta: {x: 1000, y: 1000}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &385104289
 MonoBehaviour:

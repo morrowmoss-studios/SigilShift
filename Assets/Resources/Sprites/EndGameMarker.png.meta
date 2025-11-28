@@ -623,7 +623,26 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      EndGameMarker_0: -43912922997092596
+      EndGameMarker_1: -3366851113049567506
+      EndGameMarker_10: 6783225090360958588
+      EndGameMarker_11: 1859151482252841861
+      EndGameMarker_12: -5796897655437367395
+      EndGameMarker_13: -2675031721074240785
+      EndGameMarker_14: 4002155611716574184
+      EndGameMarker_15: 394079085465423212
+      EndGameMarker_16: 5229057968192978516
+      EndGameMarker_17: 7066601880862552633
+      EndGameMarker_18: -4869029099865243378
+      EndGameMarker_2: 7926143287219258143
+      EndGameMarker_3: -7714588312329960699
+      EndGameMarker_4: 5796305515695209628
+      EndGameMarker_5: -448151056998501400
+      EndGameMarker_6: 733813240618492088
+      EndGameMarker_7: 4030078088215930683
+      EndGameMarker_8: 6152939956858317742
+      EndGameMarker_9: 2325371793916177207
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
