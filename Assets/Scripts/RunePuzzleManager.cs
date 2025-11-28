@@ -376,6 +376,24 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _lastPlayerBlankSlot = -1;
     }
 
+    // ===============================
+    //  UI Hook – Reset Button
+    // ===============================
+    public void OnResetButtonPressed()
+    {
+        if (busy) return;          // don't stomp on an active slide / autosolve
+
+        // Stop any running coroutines (autosolve, hints, etc.)
+        StopAllCoroutines();
+
+        // Put tiles back into the solved layout
+        ResetToSolved();
+
+        // Immediately reshuffle so they get a fresh puzzle
+        ShuffleRandomWalk(shuffleSteps);
+    }
+
+    
     public void ShuffleRandomWalk(int steps)
     {
         if (busy) return;
