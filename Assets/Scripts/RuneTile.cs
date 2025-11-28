@@ -260,6 +260,8 @@ public class RuneTile : MonoBehaviour
             _pointerDown = false;
         }
 #endif
+        //  --- Touch input (mobile)
+        HandleTouchInput();
 
     }
 
@@ -286,7 +288,55 @@ public class RuneTile : MonoBehaviour
             manager?.TrySlideTile(this);
         }
     }
+    
+    // -----------------------
+    // Touch input for mobile (works with either input system)
+    // -----------------------
+    void HandleTouchInput()
+    {
+        if (Input.touchCount <= 0)
+            return;
 
+        Touch touch = Input.GetTouch(0);
+        Vector2 tpos = touch.position;
+
+        switch (touch.phase)
+        {
+            case UnityEngine.TouchPhase.Began:
+                // only start tracking if the touch began on THIS tile
+                _pointerDown = PointerOverSelf(tpos);
+                _downAt = Time.time;
+                _longPressTriggered = false;
+                break;
+
+            case UnityEngine.TouchPhase.Moved:
+            case UnityEngine.TouchPhase.Stationary:
+                // long-press rotate on mobile
+                if (_pointerDown && !_longPressTriggered && allowExplicitRotate)
+                {
+                    if (Time.time - _downAt >= longPressSeconds && PointerOverSelf(tpos))
+                    {
+                        TryExplicitRotate();
+                        _longPressTriggered = true;
+                    }
+                }
+                break;
+
+            case UnityEngine.TouchPhase.Ended:
+                // finger lifted: if we started on this tile and didn’t long-press, treat as a tap → slide
+                if (_pointerDown && !_longPressTriggered && PointerOverSelf(tpos))
+                {
+                    TryHandleClickAtScreenPos(tpos);
+                }
+                _pointerDown = false;
+                break;
+
+            case UnityEngine.TouchPhase.Canceled:
+                _pointerDown = false;
+                break;
+        }
+    }
+    
     // ---- SFX helper ----
     void PlayTap()
     {
