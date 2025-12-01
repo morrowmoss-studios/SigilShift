@@ -173,7 +173,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      MorrowmossLogo_0: -2169260664099325597
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
