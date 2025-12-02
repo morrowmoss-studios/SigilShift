@@ -771,11 +771,32 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     {
         for (int slot = 0; slot < tiles.Length; slot++)
         {
-            if (slot == blankSlot) continue;
-            if (slotToTile[slot] != slot) return false;
+            if (slot == blankSlot)
+                continue;
+
+            int tileIndex = slotToTile[slot];
+
+            // 1) Correct tile in correct slot?
+            if (tileIndex != slot)
+                return false;
+
+            // 2) If rotation matters, check orientation too
+            if (rotationEnabled)
+            {
+                RuneTile tile = tiles[tileIndex];
+                if (tile != null && tile.MaxRotationSteps > 1)
+                {
+                    // We treat "solved" as rotationSteps == 0
+                    if (tile.rotationSteps != 0)
+                        return false;
+                }
+            }
         }
+
+        // 3) Blank slot must also be in its home position
         return (blankSlot == blankTileIndex);
     }
+
 
     void OnSolved()
     {
