@@ -24,6 +24,9 @@ EditorBuildSettings:
     path: Assets/Scenes/PrivacyPolicy.unity
     guid: b044d3deaee344cfebd18bf4b9f170ba
   - enabled: 1
+    path: Assets/Scenes/TermsOfUse.unity
+    guid: 9724de9039d2b4c869391025bb30961e
+  - enabled: 1
     path: Assets/Scenes/LevelSelect.unity
     guid: a67b52df8fe4e49ff991eba8dbdff0a5
   - enabled: 1
