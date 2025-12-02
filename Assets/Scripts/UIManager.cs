@@ -221,4 +221,9 @@ public class UIManager : MonoBehaviour
         LoadScene(mainMenuSceneName);    // uses your existing method
     }
 
+    public void OpenAbout()
+    {
+        SceneManager.LoadScene("AboutGame", LoadSceneMode.Additive);
+    }
+
 }
