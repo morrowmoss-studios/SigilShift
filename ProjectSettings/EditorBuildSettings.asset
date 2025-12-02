@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Credits.unity
     guid: 4c05d63e4d4ad41f58778db68a228eaf
   - enabled: 1
+    path: Assets/Scenes/PrivacyPolicy.unity
+    guid: b044d3deaee344cfebd18bf4b9f170ba
+  - enabled: 1
     path: Assets/Scenes/LevelSelect.unity
     guid: a67b52df8fe4e49ff991eba8dbdff0a5
   - enabled: 1

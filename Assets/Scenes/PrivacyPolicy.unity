@@ -338,7 +338,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1948336768}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.24214873
+  m_Size: 0.10810836
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -711,7 +711,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1219860764}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99999994
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1294,7 +1294,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -16, y: -386}
+  m_AnchoredPosition: {x: -16, y: -376}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1384689166
@@ -1317,7 +1317,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Credits
+  m_text: Privacy Policy
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
   m_sharedMaterial: {fileID: 2339121532890614860, guid: 6d508b3b8a684466d85f3dc9e7301017, type: 2}
@@ -1700,67 +1700,31 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Font:
-
-    Eagle Lake
-
-    Designed by Brian J. Bonislawsky (Astigmatic)
-
-    Licensed
-    under the SIL Open Font License 1.1
-
-    https://openfontlicense.org
-
-
-    Sound
-    Effects:
-
-    "Scraping and Clunking Large Stone 1.wav"
-
-    by F.M.Audio
-
-    https://freesound.org/s/572754/
-
-    Licensed
-    under Creative Commons Attribution 4.0
-
-    https://creativecommons.org/licenses/by/4.0/
-
-
-    "Clunking
-    Large Stones Together 5.wav"
-
-    by F.M.Audio
-
-    https://freesound.org/s/570529/
-
-    Licensed
-    under Creative Commons Attribution 4.0
-
-    https://creativecommons.org/licenses/by/4.0/
-
-
-    Beta
-    Testers:
-
-    Mel & Bethan
-
-    Kenzie
-
-    Elaina
-
-
-    Special Thanks:
-
-    To
-    Sam, and every therapist who holds the light when we''ve forgotten how to reach
-    for it.
-
-    This game exists because you let me borrow your belief and helped
-    me to stay.
-
-
-'
+  m_text: "SigilShift \u2013 Privacy Policy\nEffective Date: [Insert Launch Date]\nDeveloper:
+    MorrowMoss Studios\n\n1. Overview\nSigilShift displays third-party advertisements
+    using Unity LevelPlay (Unity Ads). These ad services may collect limited device
+    and usage data to show appropriate ads and to prevent fraud.\nMorrowMoss Studios
+    does not collect or store any personal information.\nPlaying SigilShift means
+    you agree to this Privacy Policy.\n\n2. Data Collected\nUnity Ads may automatically
+    collect the following non-personal data:\n\u2022 Device type and model\n\u2022
+    Operating system\n\u2022 Country or region\n\u2022 IP address (for ad delivery
+    and fraud prevention)\n\u2022 Advertising ID (IDFA/GAID)\n\u2022 App usage events
+    (such as ad views)\n\u2022 Basic analytics for ad performance\n\nMorrowMoss Studios
+    does not store, access, or process this information. All data collection is handled
+    by Unity.\n3. Purpose of Data Collection\nUnity uses this data to:\n\u2022 Deliver
+    ads\n\u2022 Limit repetitive ads\n\u2022 Prevent fraud\n\u2022 Improve ad relevance\n\u2022
+    Track rewarded ad completion\n\n4. Children\u2019s Privacy\nSigilShift is not
+    directed to children under 13. If you are under 13, please play only with a parent
+    or guardian\u2019s permission.\n\n5. Third-Party Services\nUnity Ads / LevelPlay\nPrivacy
+    Policy: https://unity.com/legal/privacy-policy\n\n6. In-App Purchases\nSigilShift
+    includes a one-time optional purchase: \u201CRemove Ads\u201D.\nPurchases are
+    processed securely by the App Store or Google Play.\nMorrowMoss Studios does
+    not receive any payment information.\n\n7. Opt-Out Options\nUsers may reset or
+    limit ad tracking through their device:\nFor iOS: Settings \u2192 Privacy \u2192
+    Tracking\nFor Android: Settings \u2192 Google \u2192 Ads \u2192 Reset Advertising
+    ID\n\n8. Contact\nFor questions or concerns, please email:\nmorrowmoss.studios@gmail.com\n\n9.
+    Updates to This Policy\nThis Privacy Policy may be updated over time. Any changes
+    will be shown on this page.\n"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1794,7 +1758,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
