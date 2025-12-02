@@ -1104,7 +1104,7 @@ MonoBehaviour:
   hintRotateDeg: 12
   inputLocked: 0
   additiveSpriteMaterial: {fileID: 0}
-  glowColor: {r: 1, g: 0.9060749, b: 0, a: 1}
+  glowColor: {r: 1, g: 0.81960785, b: 0.4, a: 1}
   glowDuration: 1.4
   glowScalePunch: 0.0533
   glowOrderBoost: 25
