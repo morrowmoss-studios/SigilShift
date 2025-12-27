@@ -338,7 +338,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1948336768}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.15099522
+  m_Size: 0.15526997
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1700,18 +1700,50 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Goal\n-------\n\u2022 Each puzzle is a scrambled sigil. Your goal is to
-    restore the image by sliding the tiles.\n\u2022 Tap a tile next to the empty
+  m_text: 'Goal
+
+    ---------
+
+    * Each puzzle is a scrambled sigil. Your goal
+    is to restore the image by sliding the tiles.
+
+    * Tap a tile next to the empty
     space to slide it into the gap. Use the empty space to move pieces around the
-    board.\n\u2022 When every tile is in the correct place, the sigil is complete
-    and the puzzle is finished.\n\nButtons\n-----------\n\u2022 Tap the ? button
-    in a puzzle if you need help. It will give you a hint so you can keep going without
-    getting stuck.\n\u2022 Tap the home button to go to home screen. \n\u2022 Tap
-    the picture button to show what the completed puzzle should be.\n\u2022 Tap the
-    reset button to reset the puzzle. \n\nRotation (optional)\n-----------------------\n\u2022
-    In Settings, you can turn Rotation on or off.\n\u2022 When Rotation is on, some
-    tiles may start turned the wrong way.\n\u2022 Touch and hold (long-press) a tile
-    to rotate it. Keep holding and releasing until the artwork lines up.\n"
+    board.
+
+    * When every tile is in the correct place, the sigil is complete
+    and the puzzle is finished.
+
+
+    Buttons
+
+    -------------
+
+    * Tap the ?
+    button to get a hint so you can keep going without getting stuck.
+
+    * Tap
+    the home button to return to the main menu.
+
+    * Tap the picture button to
+    see a preview of what the completed puzzle should look like.
+
+    * Tap the reset
+    button to restart the current puzzle from the beginning.
+
+
+    Rotation (optional)
+
+    ---------------------------
+
+    *
+    In Settings, you can turn Rotation on or off.
+
+    * When Rotation is on, some
+    tiles may start turned the wrong way.
+
+    * Press and hold (long-press) a tile
+    to rotate it. Repeat until the artwork lines up correctly.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
