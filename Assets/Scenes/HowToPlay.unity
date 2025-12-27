@@ -337,8 +337,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1948336769}
   m_HandleRect: {fileID: 1948336768}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 1
+  m_Value: 1
+  m_Size: 0.15099522
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -950,14 +950,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 648531765}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: CancelAndGo
+        m_MethodName: LoadScene
         m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: AboutGame
+          m_StringArgument: MainMenu
           m_BoolArgument: 0
         m_CallState: 1
 --- !u!114 &1193789808
@@ -1700,7 +1700,18 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: "Goal\n-------\n\u2022 Each puzzle is a scrambled sigil. Your goal is to
+    restore the image by sliding the tiles.\n\u2022 Tap a tile next to the empty
+    space to slide it into the gap. Use the empty space to move pieces around the
+    board.\n\u2022 When every tile is in the correct place, the sigil is complete
+    and the puzzle is finished.\n\nButtons\n-----------\n\u2022 Tap the ? button
+    in a puzzle if you need help. It will give you a hint so you can keep going without
+    getting stuck.\n\u2022 Tap the home button to go to home screen. \n\u2022 Tap
+    the picture button to show what the completed puzzle should be.\n\u2022 Tap the
+    reset button to reset the puzzle. \n\nRotation (optional)\n-----------------------\n\u2022
+    In Settings, you can turn Rotation on or off.\n\u2022 When Rotation is on, some
+    tiles may start turned the wrong way.\n\u2022 Touch and hold (long-press) a tile
+    to rotate it. Keep holding and releasing until the artwork lines up.\n"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1727,14 +1738,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
