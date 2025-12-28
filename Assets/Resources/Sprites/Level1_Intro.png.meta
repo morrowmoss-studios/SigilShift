@@ -1,16 +1,10 @@
 fileFormatVersion: 2
-guid: 1f5112dba4a9e4704bc12ce3507f290d
+guid: 081131bd4435c40cc999287fbf86f6f2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8916097896316244423
-    second: SigilShift_HowToPlay_0
-  - first:
-      213: -7501542195463408517
-    second: SigilShift_HowToPlay_1
-  - first:
-      213: 1753501783182749981
-    second: SigilShift_HowToPlay_2
+      213: 2398302989726935632
+    second: Level1_Intro_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -145,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SigilShift_HowToPlay_0
+      name: Level1_Intro_0
       rect:
         serializedVersion: 2
-        x: 438
-        y: 263
-        width: 449
-        height: 257
+        x: 0
+        y: 0
+        width: 1914
+        height: 1112
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -160,52 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 93e667be338a34480800000000000000
-      internalID: -8916097896316244423
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_HowToPlay_1
-      rect:
-        serializedVersion: 2
-        x: 827
-        y: 263
-        width: 7
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b74bccb3e1b25e790800000000000000
-      internalID: -7501542195463408517
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SigilShift_HowToPlay_2
-      rect:
-        serializedVersion: 2
-        x: 1199
-        y: 31
-        width: 50
-        height: 50
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d113f93d490b55810800000000000000
-      internalID: 1753501783182749981
+      spriteID: 05a6e66ccdb784120800000000000000
+      internalID: 2398302989726935632
       vertices: []
       indices: 
       edges: []
@@ -223,10 +173,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      SigilShift_HowToPlay_0: -8916097896316244423
-      SigilShift_HowToPlay_1: -7501542195463408517
-      SigilShift_HowToPlay_2: 1753501783182749981
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -488,12 +488,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         busy = false;
         OnSolved();
-    }
-
-    // ===============================
-    //  HINT v2: bigger, clearer, rotation-aware
-    // ===============================
-   // ===============================
+    } // ===============================
 //  HINT v2: bigger, clearer, rotation-aware, anti-undo
 // ===============================
     public void ShowHint()
