@@ -18,8 +18,16 @@ public static class LevelProgress
         {
             PlayerPrefs.SetInt(HighestLevelKey, levelNumber);
             PlayerPrefs.Save();
+
+            Debug.Log($"[LevelProgress] Highest unlocked set to {levelNumber}");
+        }
+        else
+        {
+            Debug.Log($"[LevelProgress] UnlockUpTo({levelNumber}) called, " +
+                      $"but current highest is {current} – no change.");
         }
     }
+
 
     // Optional: call this once from a debug menu if you want to wipe progress
     public static void ResetProgress()
