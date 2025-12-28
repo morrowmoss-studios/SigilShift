@@ -305,7 +305,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     
     // ===============================
     // ISlidingPuzzle (called by RuneTile on click)
-    // ===============================
+    // Short tap: only tries to slide, NEVER rotates.
+    // Long press rotation is handled inside RuneTile via TryExplicitRotate().
     public void TrySlideTile(RuneTile tile)
     {
         if (busy || inputLocked || tile == null) return;
@@ -315,28 +316,23 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         int tileSlot = tileToSlot[tileIdx];
 
-        // click-to-rotate if not adjacent
+        // If not adjacent to the blank: do nothing on a tap.
+        // Rotation is ONLY handled by long-press in RuneTile.
         if (!IsAdjacent(tileSlot, blankSlot))
         {
-            Debug.Log($"[RunePuzzleManager] Non-adjacent click on {tile.name}. rotationEnabled={rotationEnabled}, quarterTurns={rotationQuarterTurns}");
-            
-            if (rotationEnabled && rotationQuarterTurns > 1)
-                tile.RotateOnce();
             return;
         }
 
         busy = true;
 
-        // NEW: remember where the blank was before this move (so we can detect a direct undo next hint)
+        // remember blank position before this move
         int prevBlankSlot = blankSlot;
 
         Vector3 target = slotWorldPos[blankSlot];
         tile.SlideTo(target, onComplete: () =>
         {
-            // commit mapping (push to history)
             CommitMove(tileIdx, oldSlot: tileSlot, pushHistory: true);
 
-            // NEW: mark the last player move for anti-undo hint logic
             _lastPlayerTile = tileIdx;
             _lastPlayerBlankSlot = prevBlankSlot;
 
@@ -347,6 +343,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
                 OnSolved();
         });
     }
+
     
     // ===============================
     //  Public controls
