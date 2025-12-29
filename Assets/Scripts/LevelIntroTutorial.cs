@@ -1,38 +1,30 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LevelIntroTutorial : MonoBehaviour
 {
-    // shown-once flag
     private const string PREF_KEY = "SS_LevelIntro_Shown";
 
     [Header("Panels in order")]
-    public GameObject[] panels;   // Tile_PopUp_Slide, Tile_PopUp_Rot, Reset_PopUp, Preview_PopUp, Hint_PopUp, Home_PopUp
+    public GameObject[] panels;   // Tile_PopUp_Slide, Tile_PopUp_Rot, Reset, Preview, Hint, Home
 
-    [Header("Puzzle to lock while showing (optional)")]
-    public RunePuzzleManager puzzle;   // drag it, or we’ll auto-find
+    [Header("Which scene to load after tutorial")]
+    public string nextSceneName = "Level_1";
 
     int _currentIndex = -1;
     bool _active = false;
 
     void Start()
     {
-        // already shown once? make sure everything is off and bail
+        // If we've already shown this once, skip the whole thing
         if (PlayerPrefs.GetInt(PREF_KEY, 0) == 1)
         {
-            SetAllPanels(false);
-            enabled = false;
+            SceneManager.LoadScene(nextSceneName);
             return;
         }
 
-        // auto-find puzzle if not wired
-        if (!puzzle)
-            puzzle = FindObjectOfType<RunePuzzleManager>();
-
-        if (puzzle)
-            puzzle.SetInputLocked(true);
-
-        _active = true;
         ShowPanel(0);
+        _active = true;
     }
 
     void ShowPanel(int index)
@@ -72,11 +64,11 @@ public class LevelIntroTutorial : MonoBehaviour
         int next = _currentIndex + 1;
         if (next < panels.Length)
         {
-            ShowPanel(next);   // go to next popup
+            ShowPanel(next);
         }
         else
         {
-            FinishTutorial();  // done with all of them
+            FinishTutorial();
         }
     }
 
@@ -87,10 +79,7 @@ public class LevelIntroTutorial : MonoBehaviour
         PlayerPrefs.SetInt(PREF_KEY, 1);
         PlayerPrefs.Save();
 
-        if (puzzle)
-            puzzle.SetInputLocked(false);
-
         SetAllPanels(false);
-        enabled = false;
+        SceneManager.LoadScene(nextSceneName);
     }
 }
