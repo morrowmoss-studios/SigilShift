@@ -1733,7 +1733,6 @@ MonoBehaviour:
   - {fileID: 724483972}
   - {fileID: 166771332}
   - {fileID: 1433871149}
-  nextSceneName: Level_1
 --- !u!4 &1079328018
 Transform:
   m_ObjectHideFlags: 0
