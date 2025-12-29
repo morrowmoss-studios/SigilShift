@@ -488,6 +488,18 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     } // ===============================
 //  HINT v2: bigger, clearer, rotation-aware, anti-undo
 // ===============================
+
+// Helper: does this tile currently need rotation?
+    bool NeedsRotationHint(RuneTile t)
+    {
+    if (!rotationEnabled || rotationQuarterTurns <= 1) return false;
+    if (!t) return false;
+    if (t.MaxRotationSteps <= 1) return false;
+
+    // we treat "upright" as rotationSteps == 0
+    return t.rotationSteps != 0;
+    }
+
     public void ShowHint()
     {
         if (busy || inputLocked || tiles == null || tiles.Length == 0) return;
@@ -547,10 +559,14 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     if (bestTile >= 0)
     {
         _lastHintTile = bestTile;
-        Vector3 dir = (slotWorldPos[blankSlot] - tiles[bestTile].transform.position).normalized;
-        StartCoroutine(CoHintSlide(tiles[bestTile], dir));
+        var tile = tiles[bestTile];
+        Vector3 dir = (slotWorldPos[blankSlot] - tile.transform.position).normalized;
+    
+        bool needsRot = NeedsRotationHint(tile);
+        StartCoroutine(CoHintSlide(tile, dir, needsRot));
         return;
     }
+
 
     // --- Pass B: plateau breaker (no strict improvement available) ---
     bestTile = -1;
@@ -577,8 +593,11 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     if (bestTile >= 0)
     {
         _lastHintTile = bestTile;
-        Vector3 dir = (slotWorldPos[blankSlot] - tiles[bestTile].transform.position).normalized;
-        StartCoroutine(CoHintSlide(tiles[bestTile], dir));
+        var tile = tiles[bestTile];
+        Vector3 dir = (slotWorldPos[blankSlot] - tile.transform.position).normalized;
+    
+        bool needsRot = NeedsRotationHint(tile);
+        StartCoroutine(CoHintSlide(tile, dir, needsRot));
         return;
     }
 
@@ -633,33 +652,43 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     }
 
     // Slide-style hint: enlarge + nudge toward the blank
-    IEnumerator CoHintSlide(RuneTile tile, Vector3 worldDir)
+    // If alsoRotateWiggle is true, add a little rotation wiggle as well.
+    IEnumerator CoHintSlide(RuneTile tile, Vector3 worldDir, bool alsoRotateWiggle = false)
     {
         var sr = MakeOverlayFor(tile, out var fx);
         if (!sr) yield break;
-
+    
         float nudgeDist = hintNudge * 0.001f;
         float dur = Mathf.Max(0.2f, hintDuration);
         float t = 0f;
-
+    
         while (t < dur)
         {
             t += Time.deltaTime;
             float u = Mathf.Clamp01(t / dur);
-
-            float a = Mathf.Sin(u * Mathf.PI);
-            float s = 1f + hintEnlarge * Mathf.Sin(u * Mathf.PI);
+    
+            float a   = Mathf.Sin(u * Mathf.PI);
+            float s   = 1f + hintEnlarge * Mathf.Sin(u * Mathf.PI);
             Vector3 off = worldDir * (nudgeDist * Mathf.Sin(u * Mathf.PI));
-
+    
+            float rot = 0f;
+            if (alsoRotateWiggle)
+            {
+                rot = Mathf.Sin(u * Mathf.PI * 2f) * hintRotateDeg;
+            }
+    
             var c = sr.color; c.a = a;
-            sr.color = c;
-            fx.localScale    = Vector3.one * s;
+            sr.color        = c;
+            fx.localScale   = Vector3.one * s;
             fx.localPosition = off;
-
+            fx.localRotation = Quaternion.Euler(0f, 0f, rot);
+    
             yield return null;
         }
+    
         if (fx) Destroy(fx.gameObject);
     }
+
 
     // Rotation-style hint: enlarge + small rotate wiggle
     IEnumerator CoHintRotate(RuneTile tile)
