@@ -795,7 +795,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         if (_popupShowing) return;
         _popupShowing = true;
 
-        // 🔓 Unlock the next level
+        //  Unlock the next level
         int currentLevel = GetCurrentLevelNumber();   // uses "Level_" prefix
         LevelProgress.UnlockUpTo(currentLevel + 1);
 

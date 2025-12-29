@@ -225,5 +225,14 @@ public class UIManager : MonoBehaviour
     {
         SceneManager.LoadScene("AboutGame", LoadSceneMode.Additive);
     }
+    
+    public void OpenHowToPlay()
+    {
+        Debug.Log("[UI] Opening How To Play intro");
+        LevelIntroTutorial.FromHowToPlay = true;   // 👈 tell the intro we came from menu
+        SceneManager.LoadScene("Level_Intro");
+    }
+
+
 
 }
