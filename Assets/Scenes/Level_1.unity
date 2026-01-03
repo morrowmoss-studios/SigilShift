@@ -1086,7 +1086,7 @@ MonoBehaviour:
   shuffleOnStart: 1
   shuffleSteps: 90
   waitForTapToStart: 1
-  rotationEnabled: 0
+  rotationEnabled: 1
   rotationQuarterTurns: 4
   randomizeRotationOnShuffle: 1
   fixRotationsOnAutoSolve: 1
@@ -1128,6 +1128,7 @@ MonoBehaviour:
   levelSelectSceneName: LevelSelect
   levelScenePrefix: Level_
   maxLevelNumber: 30
+  debugWinCheck: 0
 --- !u!1 &263144237
 GameObject:
   m_ObjectHideFlags: 0
