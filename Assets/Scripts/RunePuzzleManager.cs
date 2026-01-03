@@ -302,25 +302,59 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // ===============================
     public void TrySlideTile(RuneTile tile)
     {
-        if (busy || inputLocked || tile == null) return;
+        // basic guards
+        if (busy || inputLocked || tile == null)
+            return;
 
-        int tileIdx = GetTileIndex(tile);
-        if (tileIdx < 0) return;
-
-        int tileSlot = tileToSlot[tileIdx];
-
-        // If not adjacent to the blank: do nothing on a tap.
-        if (!IsAdjacent(tileSlot, blankSlot))
+        // 🔒 Make sure the board is actually initialized
+        if (tiles == null || slotWorldPos == null || slotToTile == null || tileToSlot == null)
         {
+            Debug.LogWarning("[RunePuzzleManager] TrySlideTile called before board initialized. Ignoring click.");
             return;
         }
 
+        int tileIdx = GetTileIndex(tile);
+        if (tileIdx < 0)
+        {
+            Debug.LogWarning("[RunePuzzleManager] TrySlideTile: tile not found in tiles[]: " + tile.name);
+            return;
+        }
+
+        if (tileIdx >= tileToSlot.Length)
+        {
+            Debug.LogError($"[RunePuzzleManager] TrySlideTile: tileIdx {tileIdx} " +
+                           $"out of range for tileToSlot (len={tileToSlot.Length}).");
+            return;
+        }
+
+        int tileSlot = tileToSlot[tileIdx];
+
+        if (tileSlot < 0 || tileSlot >= slotWorldPos.Length)
+        {
+            Debug.LogError($"[RunePuzzleManager] TrySlideTile: tileSlot {tileSlot} invalid " +
+                           $"for slotWorldPos (len={slotWorldPos.Length}).");
+            return;
+        }
+
+        // If not adjacent to the blank: do nothing on a tap.
+        if (!IsAdjacent(tileSlot, blankSlot))
+            return;
+
         busy = true;
 
-        // remember blank position before this move
+        // remember where the blank was before the move
         int prevBlankSlot = blankSlot;
 
+        if (blankSlot < 0 || blankSlot >= slotWorldPos.Length)
+        {
+            Debug.LogError($"[RunePuzzleManager] TrySlideTile: BLANK slot {blankSlot} invalid " +
+                           $"for slotWorldPos (len={slotWorldPos.Length}).");
+            busy = false;
+            return;
+        }
+
         Vector3 target = slotWorldPos[blankSlot];
+
         tile.SlideTo(target, onComplete: () =>
         {
             CommitMove(tileIdx, oldSlot: tileSlot, pushHistory: true);
@@ -335,6 +369,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
                 OnSolved();
         });
     }
+
     
     public void NotifyTileRotated(RuneTile tile)
     {
