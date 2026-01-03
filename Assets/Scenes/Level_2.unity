@@ -1079,6 +1079,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 781876b4cc2454c72929334e44fb0279, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugWinCheck: 1
   rows: 3
   cols: 3
   loader: {fileID: 1776992577}
@@ -1086,7 +1087,7 @@ MonoBehaviour:
   shuffleOnStart: 1
   shuffleSteps: 90
   waitForTapToStart: 1
-  rotationEnabled: 0
+  rotationEnabled: 1
   rotationQuarterTurns: 4
   randomizeRotationOnShuffle: 1
   fixRotationsOnAutoSolve: 1

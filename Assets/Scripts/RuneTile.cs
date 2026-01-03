@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
 
-
 public interface ISlidingPuzzle
 {
     void TrySlideTile(RuneTile tile);
+    void NotifyTileRotated(RuneTile tile); // NEW: notify manager when a tile rotates
 }
 
 [DisallowMultipleComponent]
@@ -49,6 +49,13 @@ public class RuneTile : MonoBehaviour
     float _downAt;
     bool _longPressTriggered;
 
+    // -----------------------
+    // Rotation support
+    // -----------------------
+    [HideInInspector] public int rotationSteps;  // 0..(_maxSteps-1)
+    int _maxSteps = 4;
+    public int MaxRotationSteps => _maxSteps;
+
     void Awake()
     {
         _sr = GetComponent<SpriteRenderer>();
@@ -66,7 +73,6 @@ public class RuneTile : MonoBehaviour
         _audio.spatialBlend = 0f; // 2D
     }
     
-
     public void SetSlideTime(float seconds) => slideTime = Mathf.Max(0.01f, seconds);
     public void SetLabel(int id) => gameObject.name = $"Tile_{id}";
 
@@ -96,107 +102,106 @@ public class RuneTile : MonoBehaviour
     }
 
     void Update()
-{
-    // ---------- slide animation ----------
-    if (sliding)
     {
-        t += Time.deltaTime / Mathf.Max(0.0001f, slideTime);
-        float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
-        transform.position = Vector3.Lerp(startPos, endPos, k);
-        if (t >= 1f)
+        // ---------- slide animation ----------
+        if (sliding)
         {
-            sliding = false;
-            transform.position = endPos;
-            _onComplete?.Invoke();
+            t += Time.deltaTime / Mathf.Max(0.0001f, slideTime);
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
+            transform.position = Vector3.Lerp(startPos, endPos, k);
+            if (t >= 1f)
+            {
+                sliding = false;
+                transform.position = endPos;
+                _onComplete?.Invoke();
+            }
         }
-    }
 
-    // ---------- UNIFIED POINTER (mouse OR touch) ----------
-    bool pointerDownThis = false;
-    bool pointerUpThis   = false;
-    bool pointerHeld     = false;
-    Vector2 pointerPos   = Vector2.zero;
+        // ---------- UNIFIED POINTER (mouse OR touch) ----------
+        bool pointerDownThis = false;
+        bool pointerUpThis   = false;
+        bool pointerHeld     = false;
+        Vector2 pointerPos   = Vector2.zero;
 
-    // 1) Touch on device
-    if (Input.touchCount > 0)
-    {
-        Touch touch = Input.GetTouch(0);   // first finger only
-        pointerPos = touch.position;
-
-        switch (touch.phase)
+        // 1) Touch on device
+        if (Input.touchCount > 0)
         {
-            case UnityEngine.TouchPhase.Began:
-                pointerDownThis = true;
-                pointerHeld     = true;
-                break;
-            case UnityEngine.TouchPhase.Moved:
-            case UnityEngine.TouchPhase.Stationary:
-                pointerHeld     = true;
-                break;
-            case UnityEngine.TouchPhase.Ended:
-            case UnityEngine.TouchPhase.Canceled:
-                pointerUpThis   = true;
-                break;
+            Touch touch = Input.GetTouch(0);   // first finger only
+            pointerPos = touch.position;
+
+            switch (touch.phase)
+            {
+                case UnityEngine.TouchPhase.Began:
+                    pointerDownThis = true;
+                    pointerHeld     = true;
+                    break;
+                case UnityEngine.TouchPhase.Moved:
+                case UnityEngine.TouchPhase.Stationary:
+                    pointerHeld     = true;
+                    break;
+                case UnityEngine.TouchPhase.Ended:
+                case UnityEngine.TouchPhase.Canceled:
+                    pointerUpThis   = true;
+                    break;
+            }
         }
-    }
-    else
-    {
-        // 2) Mouse in editor / standalone
-        pointerPos     = Input.mousePosition;
-        pointerDownThis = Input.GetMouseButtonDown(0);
-        pointerUpThis   = Input.GetMouseButtonUp(0);
-        pointerHeld     = Input.GetMouseButton(0);
-    }
-
-    bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-
-    // ----- explicit rotate (right-click or Shift+Click) -----
-    // (Optional: only really matters on desktop; on phone you'll use long-press)
-    bool rightClick = Input.GetMouseButtonDown(1);  // only exists for mouse
-    if (allowExplicitRotate)
-    {
-        if (rightClick && PointerOverSelf(Input.mousePosition))
+        else
         {
-            TryExplicitRotate();
-            _longPressTriggered = true;
+            // 2) Mouse in editor / standalone
+            pointerPos      = Input.mousePosition;
+            pointerDownThis = Input.GetMouseButtonDown(0);
+            pointerUpThis   = Input.GetMouseButtonUp(0);
+            pointerHeld     = Input.GetMouseButton(0);
         }
-        else if (pointerDownThis && shift && PointerOverSelf(pointerPos))
-        {
-            TryExplicitRotate();
-            _longPressTriggered = true;
-        }
-    }
 
-    // ----- long-press detection (mouse or touch) -----
-    if (pointerDownThis)
-    {
-        _pointerDown = PointerOverSelf(pointerPos);
-        _downAt = Time.time;
-        _longPressTriggered = false;
-    }
+        bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-    if (_pointerDown && !_longPressTriggered && pointerHeld && allowExplicitRotate)
-    {
-        if (Time.time - _downAt >= longPressSeconds)
+        // ----- explicit rotate (right-click or Shift+Click) -----
+        // (Optional: only really matters on desktop; on phone you'll use long-press)
+        bool rightClick = Input.GetMouseButtonDown(1);  // only exists for mouse
+        if (allowExplicitRotate)
         {
-            if (PointerOverSelf(pointerPos))
+            if (rightClick && PointerOverSelf(Input.mousePosition))
+            {
+                TryExplicitRotate();
+                _longPressTriggered = true;
+            }
+            else if (pointerDownThis && shift && PointerOverSelf(pointerPos))
             {
                 TryExplicitRotate();
                 _longPressTriggered = true;
             }
         }
-    }
 
-    if (pointerUpThis)
-    {
-        if (!_longPressTriggered && PointerOverSelf(pointerPos))
+        // ----- long-press detection (mouse or touch) -----
+        if (pointerDownThis)
         {
-            TryHandleClickAtScreenPos(pointerPos);   // this calls manager.TrySlideTile
+            _pointerDown = PointerOverSelf(pointerPos);
+            _downAt = Time.time;
+            _longPressTriggered = false;
         }
-        _pointerDown = false;
-    }
-}
 
+        if (_pointerDown && !_longPressTriggered && pointerHeld && allowExplicitRotate)
+        {
+            if (Time.time - _downAt >= longPressSeconds)
+            {
+                if (PointerOverSelf(pointerPos))
+                {
+                    TryExplicitRotate();
+                    _longPressTriggered = true;
+                }
+            }
+        }
+
+        if (pointerUpThis)
+        {
+            if (!_longPressTriggered && PointerOverSelf(pointerPos))
+            {
+                TryHandleClickAtScreenPos(pointerPos);   // this calls manager.TrySlideTile
+            }
+            _pointerDown = false;
+        }
+    }
 
     // We keep this method but make it a no-op to avoid double-firing; Update handles clicks.
     void OnMouseDown() { /* handled centrally in Update */ }
@@ -223,7 +228,7 @@ public class RuneTile : MonoBehaviour
     }
     
     // -----------------------
-    // Touch input for mobile (works with either input system)
+    // Touch input for mobile (legacy helper)
     // -----------------------
     void HandleTouchInput()
     {
@@ -236,7 +241,6 @@ public class RuneTile : MonoBehaviour
         switch (touch.phase)
         {
             case UnityEngine.TouchPhase.Began:
-                // only start tracking if the touch began on THIS tile
                 _pointerDown = PointerOverSelf(tpos);
                 _downAt = Time.time;
                 _longPressTriggered = false;
@@ -244,7 +248,6 @@ public class RuneTile : MonoBehaviour
 
             case UnityEngine.TouchPhase.Moved:
             case UnityEngine.TouchPhase.Stationary:
-                // long-press rotate on mobile
                 if (_pointerDown && !_longPressTriggered && allowExplicitRotate)
                 {
                     if (Time.time - _downAt >= longPressSeconds && PointerOverSelf(tpos))
@@ -256,7 +259,6 @@ public class RuneTile : MonoBehaviour
                 break;
 
             case UnityEngine.TouchPhase.Ended:
-                // finger lifted: if we started on this tile and didn’t long-press, treat as a tap → slide
                 if (_pointerDown && !_longPressTriggered && PointerOverSelf(tpos))
                 {
                     TryHandleClickAtScreenPos(tpos);
@@ -281,14 +283,6 @@ public class RuneTile : MonoBehaviour
         _audio.PlayOneShot(tapClip, tapVolume);
         _audio.pitch = 1f;
     }
-
-    // -----------------------
-    // Rotation support
-    // -----------------------
-    [HideInInspector] public int rotationSteps;  // 0..(_maxSteps-1)
-    int _maxSteps = 4;
-
-    public int MaxRotationSteps => _maxSteps;
 
     public void InitRotationSystem(int quarterTurns)
     {
@@ -345,8 +339,10 @@ public class RuneTile : MonoBehaviour
 
         Debug.Log($"[RuneTile] EXPLICIT ROTATE FIRED on {name}");
         RotateOnce();
-    }
 
+        // 🔥 NEW: after we rotate, tell the manager so it can check for a win
+        manager?.NotifyTileRotated(this);
+    }
 
     // Lightweight check so we don’t need to reference concrete manager type
     bool GetRotationEnabledFromManager()
@@ -366,7 +362,6 @@ public class RuneTile : MonoBehaviour
         return false;   
     }
 
-    
     bool PointerOverSelf(Vector2 screenPos)
     {
         var cam = Camera.main;
@@ -375,5 +370,4 @@ public class RuneTile : MonoBehaviour
         var hit = Physics2D.OverlapPoint(new Vector2(wp.x, wp.y));
         return hit != null && hit.gameObject == gameObject;
     }
-
 }
