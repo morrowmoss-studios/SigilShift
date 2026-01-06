@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 using Random = UnityEngine.Random;
+using TMPro;
 
 [DisallowMultipleComponent]
 public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
@@ -120,11 +121,28 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField] private string levelScenePrefix = "Level_";
     [SerializeField] private int maxLevelNumber = 30;
 
+    // ===== Hints =====
+    [Header("Hints")]
+    [SerializeField] private int startingHints = 3;
+    [SerializeField] private TextMeshProUGUI hintsLeftText;
+
+    private int hintsRemaining;
+
     // ===== Debug =====
     [Header("Debug")]
     [SerializeField] private bool debugWinCheck = false;
 
     private AudioSource _audio;
+
+    // ----------------------------------------------------
+    // Hints UI helper
+    // ----------------------------------------------------
+    private void UpdateHintsUI()
+    {
+        if (!hintsLeftText) return;
+        // Two-line layout: label + number
+        hintsLeftText.text = $"Hints left:\n{hintsRemaining}";
+    }
 
     void Awake()
     {
@@ -239,6 +257,10 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _lastPlayerBlankSlot = -1;
 
         ValidateMappings("After Start init");
+
+        // --- Hints: init starting value + UI ---
+        hintsRemaining = startingHints;
+        UpdateHintsUI();
 
         if (shuffleOnStart)
         {
@@ -370,7 +392,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         });
     }
 
-    
     public void NotifyTileRotated(RuneTile tile)
     {
         // If something else is running (autosolve, shuffle, popup), ignore rotation events
@@ -388,7 +409,6 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             OnSolved();
         }
     }
-
 
     // ===============================
     //  Public controls
@@ -430,6 +450,10 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         StopAllCoroutines();
         ResetToSolved();
         ShuffleRandomWalk(shuffleSteps);
+
+        // Restore free hints when the player resets the puzzle
+        hintsRemaining = startingHints;
+        UpdateHintsUI();
     }
 
     public void ShuffleRandomWalk(int steps)
@@ -578,6 +602,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     public void ShowHint()
     {
         if (busy || inputLocked || tiles == null || tiles.Length == 0) return;
+
+        // No free hints left – later we’ll hook a rewarded ad here
+        if (hintsRemaining <= 0)
+        {
+            // TODO: SigilAdsManager.Instance?.ShowRewardedForHint();
+            return;
+        }
+
+        // Spend one hint and refresh UI
+        hintsRemaining = Mathf.Max(0, hintsRemaining - 1);
+        UpdateHintsUI();
 
         // 0) If any tile is already in its correct slot but rotated wrong, prefer a rotate hint
         if (rotationEnabled && rotationQuarterTurns > 1)
