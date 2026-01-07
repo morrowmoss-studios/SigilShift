@@ -606,10 +606,18 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         // No free hints left – later we’ll hook a rewarded ad here
         if (hintsRemaining <= 0)
         {
-            // TODO: SigilAdsManager.Instance?.ShowRewardedForHint();
+            // Out of free hints – try rewarded ad for an extra one
+            if (SigilAdsManager.Instance != null)
+            {
+                SigilAdsManager.Instance.ShowRewardedForHint(OnRewardHintGranted);
+            }
+            else
+            {
+                Debug.Log("[RunePuzzleManager] No SigilAdsManager in scene – cannot show rewarded hint ad.");
+            }
             return;
         }
-
+        
         // Spend one hint and refresh UI
         hintsRemaining = Mathf.Max(0, hintsRemaining - 1);
         UpdateHintsUI();
@@ -726,8 +734,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             }
         }
     }
+    // Called by SigilAdsManager when the player actually earns a hint
+    private void OnRewardHintGranted()
+    {
+        // Give them one extra hint
+        hintsRemaining = Mathf.Max(1, hintsRemaining + 1);
+        UpdateHintsUI();
 
-    int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+        // Now actually *use* that hint and show the animation
+        ShowHint();
+    }
+     int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
 
     SpriteRenderer MakeOverlayFor(RuneTile tile, out Transform fxRoot)
     {
