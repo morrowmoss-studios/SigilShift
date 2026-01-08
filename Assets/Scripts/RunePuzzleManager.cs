@@ -1084,7 +1084,13 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         int currentLevel = GetCurrentLevelNumber();
         LevelProgress.UnlockUpTo(currentLevel + 1);
-
+        
+        // 🔔 Tell the ads manager a level finished
+        if (SigilAdsManager.Instance != null)
+        {
+            SigilAdsManager.Instance.NotifyLevelCompleted();
+        }
+        
         Debug.Log("<color=#9cffb0>[SigilShift] Puzzle solved!</color>");
         PlaySolvedSfx();
         StartCoroutine(CoSolvedSequence());

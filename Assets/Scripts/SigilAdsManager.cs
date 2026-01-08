@@ -1,5 +1,5 @@
+using System;             // <- needed for Action
 using UnityEngine;
-using System;
 
 public class SigilAdsManager : MonoBehaviour
 {
@@ -8,8 +8,11 @@ public class SigilAdsManager : MonoBehaviour
     [Header("IronSource / LevelPlay")]
     [SerializeField] private string iOSAppKey = "24ca1a025";
 
-    // Callback we’ll invoke when the player actually earns the hint
-    private Action _pendingHintRewardCallback;
+    // We remember what to do when the rewarded ad finishes
+    private Action _pendingHintReward;
+    
+    [SerializeField] private int showInterstitialEveryNCompletions = 3;
+    private int _completedLevelsSinceLastAd = 0;
 
     private void Awake()
     {
@@ -29,17 +32,16 @@ public class SigilAdsManager : MonoBehaviour
 #if UNITY_IOS && !UNITY_EDITOR
         // Init SDK
         IronSource.Agent.init(iOSAppKey);
-        IronSource.Agent.validateIntegration();    // optional but nice for debug
+        IronSource.Agent.validateIntegration();    // optional but handy for debug
 
-        // -------- Interstitial events --------
+        // Interstitial events
         IronSourceInterstitialEvents.onAdReadyEvent  += OnInterstitialReady;
         IronSourceInterstitialEvents.onAdClosedEvent += OnInterstitialClosed;
 
-        // -------- Rewarded events (for hints) --------
+        // Rewarded video events
         IronSourceRewardedVideoEvents.onAdRewardedEvent += OnRewardedVideoRewarded;
-        IronSourceRewardedVideoEvents.onAdClosedEvent   += OnRewardedVideoClosed;
 
-        // Pre-load first interstitial
+        // Pre-load the first interstitial
         LoadInterstitial();
 #endif
     }
@@ -52,7 +54,7 @@ public class SigilAdsManager : MonoBehaviour
     }
 
     // ----------------------------------------------------
-    // Interstitials (used e.g. every few completed levels)
+    // Interstitials (optional, for later)
     // ----------------------------------------------------
     public void ShowInterstitialIfReady()
     {
@@ -71,61 +73,16 @@ public class SigilAdsManager : MonoBehaviour
 #endif
     }
 
+#if UNITY_IOS && !UNITY_EDITOR
     private void OnInterstitialReady(IronSourceAdInfo adInfo)
     {
-        // Optional: Debug.Log("[Ads] Interstitial ready.");
+        // Optional: Debug.Log("Interstitial ready");
     }
 
     private void OnInterstitialClosed(IronSourceAdInfo adInfo)
     {
         // After the user closes an ad, load the next one
         LoadInterstitial();
-    }
-
-    // ----------------------------------------------------
-    // Rewarded video – specifically “extra_hint”
-    // ----------------------------------------------------
-
-    /// <summary>
-    /// Ask to show a rewarded ad that will grant an extra hint.
-    /// onRewardGranted will be called once the user *actually* earns it.
-    /// </summary>
-    public void ShowRewardedForHint(Action onRewardGranted)
-    {
-#if UNITY_IOS && !UNITY_EDITOR
-        if (!IronSource.Agent.isRewardedVideoAvailable())
-        {
-            Debug.Log("[Ads] No rewarded video available for hint.");
-            return;
-        }
-
-        _pendingHintRewardCallback = onRewardGranted;
-        IronSource.Agent.showRewardedVideo("extra_hint");
-#else
-        // In editor / non-iOS builds: fake the reward instantly so you can test flow.
-        onRewardGranted?.Invoke();
-#endif
-    }
-
-#if UNITY_IOS && !UNITY_EDITOR
-    private bool _earnedCurrentReward = false;
-
-    // Called by LevelPlay when the user has *earned* the reward
-    private void OnRewardedVideoRewarded(IronSourcePlacement placement, IronSourceAdInfo info)
-    {
-        _earnedCurrentReward = true;
-    }
-
-    // Called when the rewarded ad closes (finished or skipped)
-    private void OnRewardedVideoClosed(IronSourceAdInfo info)
-    {
-        if (_earnedCurrentReward && _pendingHintRewardCallback != null)
-        {
-            _pendingHintRewardCallback.Invoke();
-        }
-
-        _earnedCurrentReward = false;
-        _pendingHintRewardCallback = null;
     }
 #endif
 
@@ -134,9 +91,50 @@ public class SigilAdsManager : MonoBehaviour
 #if UNITY_IOS && !UNITY_EDITOR
         IronSourceInterstitialEvents.onAdReadyEvent  -= OnInterstitialReady;
         IronSourceInterstitialEvents.onAdClosedEvent -= OnInterstitialClosed;
-
         IronSourceRewardedVideoEvents.onAdRewardedEvent -= OnRewardedVideoRewarded;
-        IronSourceRewardedVideoEvents.onAdClosedEvent   -= OnRewardedVideoClosed;
 #endif
+    }
+
+    // ----------------------------------------------------
+    // Rewarded video for extra hints
+    // ----------------------------------------------------
+    public void ShowRewardedForHint(Action onRewarded)
+    {
+#if UNITY_IOS && !UNITY_EDITOR
+        if (IronSource.Agent.isRewardedVideoAvailable())
+        {
+            // remember what to do when the ad finishes
+            _pendingHintReward = onRewarded;
+            IronSource.Agent.showRewardedVideo("extra_hint");
+        }
+        else
+        {
+            Debug.Log("[Ads] Rewarded video not available.");
+        }
+#else
+        // EDITOR / non-iOS: just fake the ad instantly
+        Debug.Log("[Ads] Simulating rewarded hint in editor / non-iOS build.");
+        onRewarded?.Invoke();
+#endif
+    }
+
+#if UNITY_IOS && !UNITY_EDITOR
+    // Called by LevelPlay when the user actually earns the reward
+    private void OnRewardedVideoRewarded(IronSourcePlacement placement, IronSourceAdInfo adInfo)
+    {
+        _pendingHintReward?.Invoke();
+        _pendingHintReward = null;
+    }
+#endif
+    
+    public void NotifyLevelCompleted()
+    {
+        _completedLevelsSinceLastAd++;
+
+        if (_completedLevelsSinceLastAd >= showInterstitialEveryNCompletions)
+        {
+            _completedLevelsSinceLastAd = 0;
+            ShowInterstitialIfReady();
+        }
     }
 }
