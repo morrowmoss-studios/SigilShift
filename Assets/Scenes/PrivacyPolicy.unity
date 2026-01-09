@@ -338,7 +338,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1948336768}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.108108364
+  m_Size: 0.079794385
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -711,7 +711,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1219860764}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99999994
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1700,31 +1700,44 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "SigilShift \u2013 Privacy Policy\nEffective Date: [Insert Launch Date]\nDeveloper:
+  m_text: "SigilShift \u2013 Privacy Policy\nEffective Date: January 9, 2026\nDeveloper:
     MorrowMoss Studios\n\n1. Overview\nSigilShift displays third-party advertisements
     using Unity LevelPlay (Unity Ads). These ad services may collect limited device
     and usage data to show appropriate ads and to prevent fraud.\nMorrowMoss Studios
-    does not collect or store any personal information.\nPlaying SigilShift means
-    you agree to this Privacy Policy.\n\n2. Data Collected\nUnity Ads may automatically
-    collect the following non-personal data:\n\u2022 Device type and model\n\u2022
-    Operating system\n\u2022 Country or region\n\u2022 IP address (for ad delivery
-    and fraud prevention)\n\u2022 Advertising ID (IDFA/GAID)\n\u2022 App usage events
-    (such as ad views)\n\u2022 Basic analytics for ad performance\n\nMorrowMoss Studios
-    does not store, access, or process this information. All data collection is handled
-    by Unity.\n3. Purpose of Data Collection\nUnity uses this data to:\n\u2022 Deliver
-    ads\n\u2022 Limit repetitive ads\n\u2022 Prevent fraud\n\u2022 Improve ad relevance\n\u2022
-    Track rewarded ad completion\n\n4. Children\u2019s Privacy\nSigilShift is not
-    directed to children under 13. If you are under 13, please play only with a parent
-    or guardian\u2019s permission.\n\n5. Third-Party Services\nUnity Ads / LevelPlay\nPrivacy
-    Policy: https://unity.com/legal/privacy-policy\n\n6. In-App Purchases\nSigilShift
-    includes a one-time optional purchase: \u201CRemove Ads\u201D.\nPurchases are
-    processed securely by the App Store or Google Play.\nMorrowMoss Studios does
-    not receive any payment information.\n\n7. Opt-Out Options\nUsers may reset or
-    limit ad tracking through their device:\nFor iOS: Settings \u2192 Privacy \u2192
-    Tracking\nFor Android: Settings \u2192 Google \u2192 Ads \u2192 Reset Advertising
-    ID\n\n8. Contact\nFor questions or concerns, please email:\nmorrowmoss.studios@gmail.com\n\n9.
-    Updates to This Policy\nThis Privacy Policy may be updated over time. Any changes
-    will be shown on this page.\n"
+    does not run its own servers and does not collect, store, or sell any personal
+    information from players.\nBy playing SigilShift, you agree to this Privacy Policy.\n\n2.
+    Data Collected\nUnity Ads / LevelPlay may automatically collect non-personal
+    data, including:\nDevice type and model\nOperating system and version\nCountry
+    or region\nIP address (for ad delivery and fraud prevention)\nAdvertising ID
+    (IDFA/GAID)\nApp usage events (such as ad views and ad interactions)\nBasic analytics
+    related to ad performance\nAll such data collection is performed by Unity, not
+    by MorrowMoss Studios.\nMorrowMoss Studios does not access or store this information.\n\n3.
+    Purpose of Data Collection\nUnity uses this data to:\nDeliver ads in the game\nLimit
+    how often the same ad is shown\nPrevent fraud and misuse\nImprove ad relevance
+    and performance\nTrack completion of rewarded ads (for example, granting extra
+    hints or in-game rewards)\n\n4. Children\u2019s Privacy\nSigilShift is not directed
+    to children under 13.\nIf you are under 13, you should only play with a parent
+    or guardian\u2019s permission.\nMorrowMoss Studios does not knowingly collect
+    personal information from children. If you believe a child has provided personal
+    information via the game, please contact us so we can work with Unity to address
+    it if needed.\n\n5. Third-Party Services\nSigilShift uses Unity LevelPlay / Unity
+    Ads for advertising and related analytics.\nUnity Ads / LevelPlay\nPrivacy Policy:
+    https://unity.com/legal/privacy-policy\nAny data collected by Unity is handled
+    according to Unity\u2019s own privacy policy. MorrowMoss Studios does not control
+    how Unity processes this data.\n\n6. In-App Purchases\nSigilShift includes a
+    one-time optional in-app purchase: \u201CRemove Ads\u201D.\nAll purchases are
+    processed securely by the Apple App Store or Google Play Store.\nMorrowMoss Studios
+    does not receive or store any payment information (such as credit card numbers).\n\n7.
+    Opt-Out Options\nYou can reset or limit ad tracking on your device:\niOS:\nGo
+    to Settings \u2192 Privacy & Security \u2192 Tracking (or your current iOS version\u2019s
+    equivalent).\nAndroid:\nGo to Settings \u2192 Google \u2192 Ads (or Settings
+    \u2192 Privacy \u2192 Ads on some devices) and reset or limit your Advertising
+    ID.\nFor more detailed options, please refer to your device\u2019s documentation
+    and to Unity\u2019s privacy policy.\n\n8. Contact\nIf you have questions or concerns
+    about this Privacy Policy, please contact:\nMorrowMoss Studios\nEmail: contact@morrowmoss.com\n9.
+    Updates to This Policy\nThis Privacy Policy may be updated from time to time.\nAny
+    changes will be reflected by updating the \u201CEffective Date\u201D at the top
+    of this page. The latest version will always be available at this URL."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
