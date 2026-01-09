@@ -1,10 +1,14 @@
 using System;
 using UnityEngine;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 public interface ISlidingPuzzle
 {
     void TrySlideTile(RuneTile tile);
-    void NotifyTileRotated(RuneTile tile); // NEW: notify manager when a tile rotates
+    void NotifyTileRotated(RuneTile tile);
 }
 
 [DisallowMultipleComponent]
@@ -12,11 +16,11 @@ public interface ISlidingPuzzle
 [RequireComponent(typeof(BoxCollider2D))]
 public class RuneTile : MonoBehaviour
 {
-    [HideInInspector] public ISlidingPuzzle manager;   // set by loader or auto-found
+    [HideInInspector] public ISlidingPuzzle manager;
     [HideInInspector] public Vector2Int correctPos;
     [HideInInspector] public Vector2Int currentPos;
 
-    [SerializeField] float slideTime = 0.12f;          // seconds per slide
+    [SerializeField] float slideTime = 0.12f;
     bool sliding;
     Vector3 startPos, endPos;
     float t;
@@ -27,13 +31,13 @@ public class RuneTile : MonoBehaviour
 
     // ---- Tap SFX ----
     [Header("SFX (Tap)")]
-    public AudioClip tapClip;                           // assign in Inspector
-    [Range(0f,1f)] public float tapVolume = 0.6f;
+    public AudioClip tapClip;
+    [Range(0f, 1f)] public float tapVolume = 0.6f;
     public Vector2 tapPitchJitter = new(0.98f, 1.02f);
     AudioSource _audio;
     int _lastTapFrame = -9999;
 
-    // ---- Click guard (prevents double firing from multiple input paths) ----
+    // Guard so clicks don’t double-fire from multiple input paths
     int _lastClickFrame = -9999;
 
     // -----------------------
@@ -62,21 +66,19 @@ public class RuneTile : MonoBehaviour
         _col = GetComponent<BoxCollider2D>();
         if (_col != null) _col.isTrigger = false;
 
-        // Try to auto-wire a manager from any parent that implements ISlidingPuzzle
-        if (manager == null) manager = GetComponentInParent<ISlidingPuzzle>();
+        if (manager == null)
+            manager = GetComponentInParent<ISlidingPuzzle>();
 
-        // use parent's AudioSource if present, else add local
         _audio = GetComponentInParent<AudioSource>();
         if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
         _audio.playOnAwake = false;
         _audio.loop = false;
         _audio.spatialBlend = 0f; // 2D
     }
-    
+
     public void SetSlideTime(float seconds) => slideTime = Mathf.Max(0.01f, seconds);
     public void SetLabel(int id) => gameObject.name = $"Tile_{id}";
 
-    /// <summary>Place instantly or start a smooth slide to pos.</summary>
     public void SetWorldPos(Vector3 pos, bool instant)
     {
         if (instant)
@@ -86,16 +88,15 @@ public class RuneTile : MonoBehaviour
             return;
         }
         startPos = transform.position;
-        endPos   = pos;
+        endPos = pos;
         t = 0f;
         sliding = true;
     }
 
-    /// <summary>Animate to a target position and invoke onComplete at the end.</summary>
     public void SlideTo(Vector3 target, Action onComplete = null)
     {
         startPos = transform.position;
-        endPos   = target;
+        endPos = target;
         t = 0f;
         sliding = true;
         _onComplete = onComplete;
@@ -117,56 +118,120 @@ public class RuneTile : MonoBehaviour
             }
         }
 
-        // ---------- UNIFIED POINTER (mouse OR touch) ----------
+        // ---------- UNIFIED POINTER (Input System + legacy fallback) ----------
         bool pointerDownThis = false;
-        bool pointerUpThis   = false;
-        bool pointerHeld     = false;
-        Vector2 pointerPos   = Vector2.zero;
+        bool pointerUpThis = false;
+        bool pointerHeld = false;
+        Vector2 pointerPos = Vector2.zero;
 
-        // 1) Touch on device
-        if (Input.touchCount > 0)
+        // --- New Input System first ---
+#if ENABLE_INPUT_SYSTEM
+        if (Touchscreen.current != null)
         {
-            Touch touch = Input.GetTouch(0);   // first finger only
-            pointerPos = touch.position;
+            var touch = Touchscreen.current.primaryTouch;
+            pointerPos = touch.position.ReadValue();
 
-            switch (touch.phase)
+            if (touch.press.wasPressedThisFrame) pointerDownThis = true;
+            if (touch.press.isPressed)          pointerHeld = true;
+            if (touch.press.wasReleasedThisFrame) pointerUpThis = true;
+        }
+        else if (Mouse.current != null)
+        {
+            pointerPos = Mouse.current.position.ReadValue();
+            pointerDownThis = Mouse.current.leftButton.wasPressedThisFrame;
+            pointerHeld = Mouse.current.leftButton.isPressed;
+            pointerUpThis = Mouse.current.leftButton.wasReleasedThisFrame;
+        }
+#endif
+
+        // --- Legacy Input fallback (for Editor / iOS "Both" etc.) ---
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (!pointerDownThis && !pointerHeld && !pointerUpThis)
+        {
+            if (Input.touchCount > 0)
             {
-                case UnityEngine.TouchPhase.Began:
-                    pointerDownThis = true;
-                    pointerHeld     = true;
-                    break;
-                case UnityEngine.TouchPhase.Moved:
-                case UnityEngine.TouchPhase.Stationary:
-                    pointerHeld     = true;
-                    break;
-                case UnityEngine.TouchPhase.Ended:
-                case UnityEngine.TouchPhase.Canceled:
-                    pointerUpThis   = true;
-                    break;
+                Touch touch = Input.GetTouch(0);
+                pointerPos = touch.position;
+                switch (touch.phase)
+                {
+                    case TouchPhase.Began:
+                        pointerDownThis = true;
+                        pointerHeld = true;
+                        break;
+                    case TouchPhase.Moved:
+                    case TouchPhase.Stationary:
+                        pointerHeld = true;
+                        break;
+                    case TouchPhase.Ended:
+                    case TouchPhase.Canceled:
+                        pointerUpThis = true;
+                        break;
+                }
+            }
+            else
+            {
+                pointerPos = Input.mousePosition;
+                pointerDownThis = Input.GetMouseButtonDown(0);
+                pointerHeld = Input.GetMouseButton(0);
+                pointerUpThis = Input.GetMouseButtonUp(0);
             }
         }
-        else
+#endif
+
+        // ---------- modifiers (shift/right click) ----------
+        bool rightClick = false;
+        bool shift = false;
+
+#if ENABLE_INPUT_SYSTEM
+        if (Mouse.current != null)
         {
-            // 2) Mouse in editor / standalone
-            pointerPos      = Input.mousePosition;
-            pointerDownThis = Input.GetMouseButtonDown(0);
-            pointerUpThis   = Input.GetMouseButtonUp(0);
-            pointerHeld     = Input.GetMouseButton(0);
+            if (Mouse.current.rightButton.wasPressedThisFrame)
+                rightClick = true;
         }
+        if (Keyboard.current != null)
+        {
+            shift = Keyboard.current.leftShiftKey.isPressed ||
+                    Keyboard.current.rightShiftKey.isPressed;
+        }
+#endif
 
-        bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (!rightClick && Input.GetMouseButtonDown(1))
+            rightClick = true;
+        if (!shift)
+        {
+            shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        }
+#endif
 
-        // ----- explicit rotate (right-click or Shift+Click) -----
-        // (Optional: only really matters on desktop; on phone you'll use long-press)
-        bool rightClick = Input.GetMouseButtonDown(1);  // only exists for mouse
+        // ----- explicit rotate via right-click or Shift+Click -----
         if (allowExplicitRotate)
         {
-            if (rightClick && PointerOverSelf(Input.mousePosition))
+#if ENABLE_INPUT_SYSTEM
+            if (rightClick && Mouse.current != null)
             {
-                TryExplicitRotate();
-                _longPressTriggered = true;
+                var mPos = Mouse.current.position.ReadValue();
+                if (PointerOverSelf(mPos))
+                {
+                    TryExplicitRotate();
+                    _longPressTriggered = true;
+                }
             }
-            else if (pointerDownThis && shift && PointerOverSelf(pointerPos))
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            // Legacy right-click path (if still enabled)
+            if (allowExplicitRotate && !rightClick && Input.GetMouseButtonDown(1))
+            {
+                if (PointerOverSelf(Input.mousePosition))
+                {
+                    TryExplicitRotate();
+                    _longPressTriggered = true;
+                }
+            }
+#endif
+
+            if (pointerDownThis && shift && PointerOverSelf(pointerPos))
             {
                 TryExplicitRotate();
                 _longPressTriggered = true;
@@ -197,86 +262,42 @@ public class RuneTile : MonoBehaviour
         {
             if (!_longPressTriggered && PointerOverSelf(pointerPos))
             {
-                TryHandleClickAtScreenPos(pointerPos);   // this calls manager.TrySlideTile
+                TryHandleClickAtScreenPos(pointerPos);
             }
             _pointerDown = false;
         }
     }
 
-    // We keep this method but make it a no-op to avoid double-firing; Update handles clicks.
+    // We keep this so nothing else wired to OnMouseDown breaks, but it does nothing
     void OnMouseDown() { /* handled centrally in Update */ }
 
-    // ---- Single guarded click handler (the only place that triggers a move) ----
+    // ---- Single guarded click handler ----
     void TryHandleClickAtScreenPos(Vector2 screenPos)
     {
-        // one-frame debounce so multiple input paths can't double-trigger
         if (Time.frameCount == _lastClickFrame) return;
         _lastClickFrame = Time.frameCount;
 
         var cam = Camera.main;
         if (cam == null) return;
 
-        Vector3 wp = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+        Vector3 wp = cam.ScreenToWorldPoint(
+            new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z)
+        );
         Vector2 p2 = new Vector2(wp.x, wp.y);
         var hit = Physics2D.OverlapPoint(p2);
 
         if (hit != null && hit.gameObject == gameObject)
         {
-            PlayTap();                 // SFX has its own frame guard
+            PlayTap();
             manager?.TrySlideTile(this);
         }
     }
-    
-    // -----------------------
-    // Touch input for mobile (legacy helper)
-    // -----------------------
-    void HandleTouchInput()
-    {
-        if (Input.touchCount <= 0)
-            return;
 
-        Touch touch = Input.GetTouch(0);
-        Vector2 tpos = touch.position;
-
-        switch (touch.phase)
-        {
-            case UnityEngine.TouchPhase.Began:
-                _pointerDown = PointerOverSelf(tpos);
-                _downAt = Time.time;
-                _longPressTriggered = false;
-                break;
-
-            case UnityEngine.TouchPhase.Moved:
-            case UnityEngine.TouchPhase.Stationary:
-                if (_pointerDown && !_longPressTriggered && allowExplicitRotate)
-                {
-                    if (Time.time - _downAt >= longPressSeconds && PointerOverSelf(tpos))
-                    {
-                        TryExplicitRotate();
-                        _longPressTriggered = true;
-                    }
-                }
-                break;
-
-            case UnityEngine.TouchPhase.Ended:
-                if (_pointerDown && !_longPressTriggered && PointerOverSelf(tpos))
-                {
-                    TryHandleClickAtScreenPos(tpos);
-                }
-                _pointerDown = false;
-                break;
-
-            case UnityEngine.TouchPhase.Canceled:
-                _pointerDown = false;
-                break;
-        }
-    }
-    
     // ---- SFX helper ----
     void PlayTap()
     {
         if (!tapClip) return;
-        if (Time.frameCount == _lastTapFrame) return;  // prevent double SFX in same frame
+        if (Time.frameCount == _lastTapFrame) return;
         _lastTapFrame = Time.frameCount;
 
         _audio.pitch = UnityEngine.Random.Range(tapPitchJitter.x, tapPitchJitter.y);
@@ -300,7 +321,6 @@ public class RuneTile : MonoBehaviour
         ApplyRotationVisual();
     }
 
-    // set an exact rotation step from outside (used by randomizer)
     public void SetRotationSteps(int steps)
     {
         if (_maxSteps <= 1)
@@ -319,7 +339,6 @@ public class RuneTile : MonoBehaviour
         transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
     }
 
-    // ---- core explicit-rotate path (bypasses adjacency) ----
     void TryExplicitRotate()
     {
         Debug.Log($"[RuneTile] TryExplicitRotate on {name} | allowExplicitRotate={allowExplicitRotate}");
@@ -339,12 +358,9 @@ public class RuneTile : MonoBehaviour
 
         Debug.Log($"[RuneTile] EXPLICIT ROTATE FIRED on {name}");
         RotateOnce();
-
-        // 🔥 NEW: after we rotate, tell the manager so it can check for a win
         manager?.NotifyTileRotated(this);
     }
 
-    // Lightweight check so we don’t need to reference concrete manager type
     bool GetRotationEnabledFromManager()
     {
         try
@@ -359,14 +375,17 @@ public class RuneTile : MonoBehaviour
                 return (bool)fi.GetValue(m);
         }
         catch { }
-        return false;   
+        return false;
     }
 
     bool PointerOverSelf(Vector2 screenPos)
     {
         var cam = Camera.main;
         if (!cam) return false;
-        Vector3 wp = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+
+        Vector3 wp = cam.ScreenToWorldPoint(
+            new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z)
+        );
         var hit = Physics2D.OverlapPoint(new Vector2(wp.x, wp.y));
         return hit != null && hit.gameObject == gameObject;
     }

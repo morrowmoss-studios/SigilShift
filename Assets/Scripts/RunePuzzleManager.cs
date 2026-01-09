@@ -6,6 +6,10 @@ using System;
 using Random = UnityEngine.Random;
 using TMPro;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 [DisallowMultipleComponent]
 public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 {
@@ -279,13 +283,45 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
     void Update()
     {
+        // ======================
         // First-tap-to-start logic
+        // ======================
         if (_waitingForFirstTap)
         {
+            bool tapped = false;
+
+            // --- New Input System path (Android new-only, or "Both") ---
+#if ENABLE_INPUT_SYSTEM
+            // Touchscreen (phones/tablets)
+            if (Touchscreen.current != null)
+            {
+                var touch = Touchscreen.current.primaryTouch;
+                if (touch.press.wasPressedThisFrame)
+                    tapped = true;
+            }
+
+            // Fallback: mouse / pointer (Editor, simulators, etc.)
+            if (!tapped && Mouse.current != null)
+            {
+                if (Mouse.current.leftButton.wasPressedThisFrame)
+                    tapped = true;
+            }
+#endif
+
+            // --- Legacy Input fallback (Editor, iOS "Both", etc.) ---
+#if ENABLE_LEGACY_INPUT_MANAGER
+            if (!tapped)
+            {
 #if UNITY_ANDROID || UNITY_IOS
-            bool tapped = Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began;
+                // Old touch API
+                if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+                    tapped = true;
 #else
-            bool tapped = Input.GetMouseButtonDown(0);
+                // Old mouse API
+                if (Input.GetMouseButtonDown(0))
+                    tapped = true;
+#endif
+            }
 #endif
 
             if (tapped)
@@ -293,13 +329,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
                 _waitingForFirstTap = false;
                 busy = false;
                 ShuffleRandomWalk(shuffleSteps);
-                Debug.Log("[RunePuzzleManager] First tap detected — puzzle shuffled.");
+                Debug.Log("[RunePuzzleManager] First tap detected — puzzle shuffled (hybrid input).");
             }
 
+            // Don’t process tile input while we’re waiting for the first tap
             return;
         }
 
-        // debug keys
+        // ======================
+        // Debug keyboard shortcuts (Editor only, legacy input only)
+        // ======================
+#if UNITY_EDITOR && ENABLE_LEGACY_INPUT_MANAGER
         if (Input.GetKeyDown(KeyCode.R)) ResetToSolved();
         if (Input.GetKeyDown(KeyCode.S)) ShuffleRandomWalk(shuffleSteps);
         if (Input.GetKeyDown(KeyCode.A)) AutoSolve();
@@ -315,6 +355,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             }
             Debug.Log("🔄 Randomized tile rotations");
         }
+#endif
     }
 
     // ===============================
@@ -617,7 +658,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             }
             return;
         }
-        
+
         // Spend one hint and refresh UI
         hintsRemaining = Mathf.Max(0, hintsRemaining - 1);
         UpdateHintsUI();
@@ -734,6 +775,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
             }
         }
     }
+
     // Called by SigilAdsManager when the player actually earns a hint
     private void OnRewardHintGranted()
     {
@@ -744,7 +786,8 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         // Now actually *use* that hint and show the animation
         ShowHint();
     }
-     int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+
+    int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
 
     SpriteRenderer MakeOverlayFor(RuneTile tile, out Transform fxRoot)
     {
@@ -1084,13 +1127,13 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         int currentLevel = GetCurrentLevelNumber();
         LevelProgress.UnlockUpTo(currentLevel + 1);
-        
+
         // 🔔 Tell the ads manager a level finished
         if (SigilAdsManager.Instance != null)
         {
             SigilAdsManager.Instance.NotifyLevelCompleted();
         }
-        
+
         Debug.Log("<color=#9cffb0>[SigilShift] Puzzle solved!</color>");
         PlaySolvedSfx();
         StartCoroutine(CoSolvedSequence());

@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 public class LevelIntroTutorial : MonoBehaviour
 {
     // set by UIManager.OpenHowToPlay() when coming from the main menu
@@ -41,9 +45,42 @@ public class LevelIntroTutorial : MonoBehaviour
     {
         if (!_active) return;
 
-        bool tapped =
-            Input.GetMouseButtonDown(0) ||
-            (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began);
+        bool tapped = false;
+
+        // ===== New Input System first (Android new-only, or "Both") =====
+#if ENABLE_INPUT_SYSTEM
+        // Touchscreen
+        if (Touchscreen.current != null)
+        {
+            var touch = Touchscreen.current.primaryTouch;
+            if (touch.press.wasPressedThisFrame)
+                tapped = true;
+        }
+        // Mouse / pointer (Editor / simulator / desktop)
+        else if (Mouse.current != null)
+        {
+            if (Mouse.current.leftButton.wasPressedThisFrame)
+                tapped = true;
+        }
+#endif
+
+        // ===== Legacy Input fallback (iOS Both, Editor with legacy, etc.) =====
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (!tapped)
+        {
+            // Touch API
+            if (Input.touchCount > 0 &&
+                Input.GetTouch(0).phase == TouchPhase.Began)
+            {
+                tapped = true;
+            }
+            // Mouse
+            else if (Input.GetMouseButtonDown(0))
+            {
+                tapped = true;
+            }
+        }
+#endif
 
         if (!tapped) return;
 
@@ -92,7 +129,7 @@ public class LevelIntroTutorial : MonoBehaviour
         if (FromHowToPlay)
         {
             FromHowToPlay = false;               // reset for next time
-            SceneManager.LoadScene("MainMenu");  // or "MainMenu" / "Path" scene, whatever you use
+            SceneManager.LoadScene("MainMenu");
             return;
         }
 
