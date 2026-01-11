@@ -131,6 +131,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [SerializeField] private TextMeshProUGUI hintsLeftText;
 
     private int hintsRemaining;
+    private static int s_globalHintsRemaining = -1;
 
     // ===== Debug =====
     [Header("Debug")]
@@ -261,10 +262,17 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         _lastPlayerBlankSlot = -1;
 
         ValidateMappings("After Start init");
+        
+        // --- Hints: init shared pool + UI ---
+        if (s_globalHintsRemaining < 0)
+        {
+            // First time ever: start with default
+            s_globalHintsRemaining = startingHints;
+        }
 
-        // --- Hints: init starting value + UI ---
-        hintsRemaining = startingHints;
+        hintsRemaining = s_globalHintsRemaining;
         UpdateHintsUI();
+
 
         if (shuffleOnStart)
         {
@@ -493,7 +501,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         ShuffleRandomWalk(shuffleSteps);
 
         // Restore free hints when the player resets the puzzle
-        hintsRemaining = startingHints;
+        hintsRemaining = s_globalHintsRemaining;
         UpdateHintsUI();
     }
 
@@ -661,6 +669,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
 
         // Spend one hint and refresh UI
         hintsRemaining = Mathf.Max(0, hintsRemaining - 1);
+        s_globalHintsRemaining = hintsRemaining;
         UpdateHintsUI();
 
         // 0) If any tile is already in its correct slot but rotated wrong, prefer a rotate hint
@@ -779,13 +788,16 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // Called by SigilAdsManager when the player actually earns a hint
     private void OnRewardHintGranted()
     {
-        // Give them one extra hint
-        hintsRemaining = Mathf.Max(1, hintsRemaining + 1);
+        // Give them one extra hint in the shared pool
+        hintsRemaining = hintsRemaining + 1;
+        s_globalHintsRemaining = hintsRemaining;
         UpdateHintsUI();
 
         // Now actually *use* that hint and show the animation
+        // (ShowHint will immediately spend 1 and do the wiggle)
         ShowHint();
     }
+
 
     int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
 
