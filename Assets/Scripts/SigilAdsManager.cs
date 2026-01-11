@@ -10,8 +10,9 @@ public class SigilAdsManager : MonoBehaviour
 
     // We remember what to do when the rewarded ad finishes
     private Action _pendingHintReward;
-    
-    [SerializeField] private int showInterstitialEveryNCompletions = 3;
+
+    [Header("Interstitial frequency")]
+    [SerializeField] private int showInterstitialEveryNCompletions = 2;   // <-- every 2 puzzles
     private int _completedLevelsSinceLastAd = 0;
 
     private void Awake()
@@ -54,7 +55,7 @@ public class SigilAdsManager : MonoBehaviour
     }
 
     // ----------------------------------------------------
-    // Interstitials (optional, for later)
+    // Interstitials
     // ----------------------------------------------------
     public void ShowInterstitialIfReady()
     {
@@ -63,6 +64,12 @@ public class SigilAdsManager : MonoBehaviour
         {
             IronSource.Agent.showInterstitial();
         }
+        else
+        {
+            Debug.Log("[Ads] Interstitial not ready yet.");
+        }
+#else
+        Debug.Log("[Ads] Simulating interstitial in editor / non-iOS build.");
 #endif
     }
 
@@ -76,7 +83,7 @@ public class SigilAdsManager : MonoBehaviour
 #if UNITY_IOS && !UNITY_EDITOR
     private void OnInterstitialReady(IronSourceAdInfo adInfo)
     {
-        // Optional: Debug.Log("Interstitial ready");
+        // Optional: Debug.Log("[Ads] Interstitial ready");
     }
 
     private void OnInterstitialClosed(IronSourceAdInfo adInfo)
@@ -126,7 +133,10 @@ public class SigilAdsManager : MonoBehaviour
         _pendingHintReward = null;
     }
 #endif
-    
+
+    // ----------------------------------------------------
+    // Level completion hook (called from RunePuzzleManager)
+    // ----------------------------------------------------
     public void NotifyLevelCompleted()
     {
         _completedLevelsSinceLastAd++;
