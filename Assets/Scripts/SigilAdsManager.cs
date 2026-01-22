@@ -98,7 +98,7 @@ public class SigilAdsManager : MonoBehaviour
 #endif
     }
 
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_ANDROID)
     private void OnInterstitialReady(IronSourceAdInfo adInfo)
     {
         Debug.Log("[Ads] Interstitial ready.");
@@ -113,7 +113,7 @@ public class SigilAdsManager : MonoBehaviour
 
     private void OnDestroy()
     {
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_ANDROID)
         IronSourceInterstitialEvents.onAdReadyEvent  -= OnInterstitialReady;
         IronSourceInterstitialEvents.onAdClosedEvent -= OnInterstitialClosed;
         IronSourceRewardedVideoEvents.onAdRewardedEvent -= OnRewardedVideoRewarded;
@@ -144,7 +144,7 @@ public class SigilAdsManager : MonoBehaviour
 #endif
     }
 
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_ANDROID)
     // Called by LevelPlay when the user actually earns the reward
     private void OnRewardedVideoRewarded(IronSourcePlacement placement, IronSourceAdInfo adInfo)
     {
