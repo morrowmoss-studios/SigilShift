@@ -807,9 +807,10 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
         // Re-enable board input now that the ad is done
         SetInputLocked(false);
 
-        // Immediately spend that hint and show the wiggle
-        ShowHint();
+        // Do NOT auto-use it. Player can tap Hint when they're ready.
+        Debug.Log("[RunePuzzleManager] Rewarded hint granted. Player can tap Hint to use it.");
     }
+
 
 
 
