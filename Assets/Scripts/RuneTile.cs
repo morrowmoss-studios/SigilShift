@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -260,12 +261,14 @@ public class RuneTile : MonoBehaviour
 
         if (pointerUpThis)
         {
-            if (!_longPressTriggered && PointerOverSelf(pointerPos))
+            // If we released over UI (like the Cancel button), do NOT treat it as a tile click
+            if (!_longPressTriggered && !IsPointerOverUI() && PointerOverSelf(pointerPos))
             {
                 TryHandleClickAtScreenPos(pointerPos);
             }
             _pointerDown = false;
         }
+
     }
 
     // We keep this so nothing else wired to OnMouseDown breaks, but it does nothing
@@ -276,6 +279,10 @@ public class RuneTile : MonoBehaviour
     {
         if (Time.frameCount == _lastClickFrame) return;
         _lastClickFrame = Time.frameCount;
+
+        // If the board is input-locked (popup / ad flow), ignore clicks.
+        if (manager is RunePuzzleManager rpm && rpm.inputLocked)
+            return;
 
         var cam = Camera.main;
         if (cam == null) return;
@@ -389,4 +396,13 @@ public class RuneTile : MonoBehaviour
         var hit = Physics2D.OverlapPoint(new Vector2(wp.x, wp.y));
         return hit != null && hit.gameObject == gameObject;
     }
+    
+    bool IsPointerOverUI()
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        return EventSystem.current.IsPointerOverGameObject();
+    }
+
 }
