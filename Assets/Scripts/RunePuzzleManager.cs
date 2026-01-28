@@ -129,9 +129,12 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     [Header("Hints")]
     [SerializeField] private int startingHints = 3;
     [SerializeField] private TextMeshProUGUI hintsLeftText;
+    [SerializeField] private GameObject adHintSprite;
+
 
     private int hintsRemaining;
     private static int s_globalHintsRemaining = -1;
+    
 
     // ===== Debug =====
     [Header("Debug")]
@@ -144,10 +147,20 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     // ----------------------------------------------------
     private void UpdateHintsUI()
     {
-        if (!hintsLeftText) return;
-        // Two-line layout: label + number
-        hintsLeftText.text = $"Hints left:\n{hintsRemaining}";
+        if (hintsLeftText != null)
+        {
+            // Two-line layout: label + number
+            hintsLeftText.text = $"Hints left:\n{hintsRemaining}";
+        }
+
+        // Show the ad sprite ONLY when you're out of hints
+        if (adHintSprite != null)
+        {
+            bool shouldShowAdSprite = (hintsRemaining <= 0);
+            adHintSprite.SetActive(shouldShowAdSprite);
+        }
     }
+
 
     void Awake()
     {
@@ -652,20 +665,18 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     {
         if (busy || inputLocked || tiles == null || tiles.Length == 0) return;
 
-        // No free hints left – later we’ll hook a rewarded ad here
+        // No free hints left – show the ASK popup instead of going straight to ads
         if (hintsRemaining <= 0)
         {
-            // Out of free hints – try rewarded ad for an extra one
-            if (SigilAdsManager.Instance != null)
-            {
-                SigilAdsManager.Instance.ShowRewardedForHint(OnRewardHintGranted);
-            }
-            else
-            {
-                Debug.Log("[RunePuzzleManager] No SigilAdsManager in scene – cannot show rewarded hint ad.");
-            }
+            // Lock input while popup / ad workflow is happening
+            SetInputLocked(true);
+
+            // Load our shared popup scene additively
+            SceneManager.LoadScene("PopUp_HintAd", LoadSceneMode.Additive);
             return;
         }
+
+        // -------- everything below this is your existing hint logic --------
 
         // Spend one hint and refresh UI
         hintsRemaining = Mathf.Max(0, hintsRemaining - 1);
@@ -689,7 +700,7 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
                 }
             }
         }
-
+    
         // Neighbors of the blank (candidates to slide into it)
         var neigh = GetNeighborSlots(blankSlot);
         if (neigh.Count == 0) return;
@@ -786,17 +797,21 @@ public class RunePuzzleManager : MonoBehaviour, ISlidingPuzzle
     }
 
     // Called by SigilAdsManager when the player actually earns a hint
-    private void OnRewardHintGranted()
+    public void OnRewardHintGranted()
     {
         // Give them one extra hint in the shared pool
         hintsRemaining = hintsRemaining + 1;
         s_globalHintsRemaining = hintsRemaining;
         UpdateHintsUI();
 
-        // Now actually *use* that hint and show the animation
-        // (ShowHint will immediately spend 1 and do the wiggle)
+        // Re-enable board input now that the ad is done
+        SetInputLocked(false);
+
+        // Immediately spend that hint and show the wiggle
         ShowHint();
     }
+
+
 
 
     int Manhattan(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);

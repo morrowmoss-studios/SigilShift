@@ -1151,6 +1151,7 @@ MonoBehaviour:
   maxLevelNumber: 30
   startingHints: 3
   hintsLeftText: {fileID: 800279498}
+  adHintSprite: {fileID: 1299456510}
   debugWinCheck: 0
 --- !u!1 &263144237
 GameObject:
@@ -3909,12 +3910,12 @@ GameObject:
   - component: {fileID: 1299456513}
   - component: {fileID: 1299456512}
   m_Layer: 5
-  m_Name: Ads
+  m_Name: Ad?Hint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1299456511
 RectTransform:
   m_ObjectHideFlags: 0
