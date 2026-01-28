@@ -1276,7 +1276,7 @@ MonoBehaviour:
   maxLevelNumber: 30
   startingHints: 3
   hintsLeftText: {fileID: 122262122}
-  adHintSprite: {fileID: 0}
+  adHintSprite: {fileID: 570263194}
   debugWinCheck: 0
 --- !u!1 &263144237
 GameObject:
@@ -2286,6 +2286,11 @@ PrefabInstance:
 --- !u!224 &570263193 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6971948577479522312, guid: 56d20510ecb6f423db29b8d00a86fad0, type: 3}
+  m_PrefabInstance: {fileID: 570263192}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &570263194 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1917340222849360969, guid: 56d20510ecb6f423db29b8d00a86fad0, type: 3}
   m_PrefabInstance: {fileID: 570263192}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &639656495
