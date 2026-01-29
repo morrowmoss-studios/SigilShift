@@ -1,20 +1,46 @@
-using System;             // <- needed for Action
+using System;
 using UnityEngine;
+
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+using Unity.Services.LevelPlay;
+#endif
 
 public class SigilAdsManager : MonoBehaviour
 {
     public static SigilAdsManager Instance { get; private set; }
 
-    [Header("IronSource / LevelPlay")]
+    [Header("LevelPlay App Keys")]
     [SerializeField] private string iOSAppKey = "24ca1a025";
     [SerializeField] private string androidAppKey = "24ca1d9ad";
 
-    // We remember what to do when the rewarded ad finishes
-    private Action _pendingHintReward;
+    [Header("Rewarded Ad Unit IDs (platform-specific)")]
+    [Tooltip("iOS Rewarded Ad Unit ID (HintReward)")]
+    [SerializeField] private string rewardedAdUnitId_iOS = "";
+
+    [Tooltip("Android Rewarded Ad Unit ID (HintReward)")]
+    [SerializeField] private string rewardedAdUnitId_Android = "";
+
+    [Header("Interstitial Ad Unit IDs (platform-specific)")]
+    [Tooltip("iOS Interstitial Ad Unit ID (After2Puzzles)")]
+    [SerializeField] private string interstitialAdUnitId_iOS = "";
+
+    [Tooltip("Android Interstitial Ad Unit ID (After2Puzzles)")]
+    [SerializeField] private string interstitialAdUnitId_Android = "";
 
     [Header("Interstitial frequency")]
-    [SerializeField] private int showInterstitialEveryNCompletions = 2;   // every 2 puzzles
-    private int _completedLevelsSinceLastAd = 0;
+    [Tooltip("Show an interstitial every N puzzle completions (not unique levels).")]
+    [SerializeField] private int showInterstitialEveryNCompletions = 2;
+
+    private int _completedPuzzlesSinceLastInterstitial = 0;
+
+    // we remember what to do when the rewarded ad actually pays out
+    private Action _pendingHintReward;
+
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+    private bool _sdkInitialized;
+    private LevelPlayRewardedAd _rewardedAd;
+    private LevelPlayInterstitialAd _interstitialAd;
+#endif
 
     private void Awake()
     {
@@ -32,139 +58,265 @@ public class SigilAdsManager : MonoBehaviour
     private void Start()
     {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-
-        string appKey =
-#if UNITY_IOS
-            iOSAppKey;
+        InitLevelPlay();
 #else
-            androidAppKey;
+        Debug.Log("[Ads] Editor / non-mobile build – ads simulated.");
 #endif
+    }
 
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+    // ----------------------------------------------------
+    // LevelPlay init
+    // ----------------------------------------------------
+    private void InitLevelPlay()
+    {
+        string appKey = GetAppKeyForPlatform();
         if (string.IsNullOrEmpty(appKey))
         {
             Debug.LogError("[Ads] App key is EMPTY for this platform – check SigilAdsManager inspector.");
             return;
         }
 
-        Debug.Log($"[Ads] Initializing IronSource with appKey={appKey}");
-        IronSource.Agent.init(appKey);
-        IronSource.Agent.validateIntegration();    // optional but handy for debug
+        LevelPlay.OnInitSuccess += OnSdkInitSuccess;
+        LevelPlay.OnInitFailed  += OnSdkInitFailed;
 
-        // Interstitial events
-        IronSourceInterstitialEvents.onAdReadyEvent    += OnInterstitialReady;
-        IronSourceInterstitialEvents.onAdClosedEvent   += OnInterstitialClosed;
+        Debug.Log($"[Ads] Initializing LevelPlay with appKey={appKey}");
+        LevelPlay.Init(appKey);
+    }
 
-        // Rewarded video events
-        IronSourceRewardedVideoEvents.onAdRewardedEvent += OnRewardedVideoRewarded;
+    private string GetAppKeyForPlatform()
+    {
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+            return iOSAppKey;
+        if (Application.platform == RuntimePlatform.Android)
+            return androidAppKey;
 
-        // Pre-load the first interstitial
-        LoadInterstitial();
+        return null;
+    }
+
+    private string GetRewardedAdUnitIdForPlatform()
+    {
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+            return rewardedAdUnitId_iOS;
+        if (Application.platform == RuntimePlatform.Android)
+            return rewardedAdUnitId_Android;
+
+        return null;
+    }
+
+    private string GetInterstitialAdUnitIdForPlatform()
+    {
+        if (Application.platform == RuntimePlatform.IPhonePlayer)
+            return interstitialAdUnitId_iOS;
+        if (Application.platform == RuntimePlatform.Android)
+            return interstitialAdUnitId_Android;
+
+        return null;
+    }
+
+    private void OnSdkInitSuccess(LevelPlayConfiguration config)
+    {
+        Debug.Log("[Ads] LevelPlay SDK initialized successfully.");
+        _sdkInitialized = true;
+
+        SetupRewardedAd();
+        SetupInterstitialAd();
+    }
+
+    private void OnSdkInitFailed(LevelPlayInitError error)
+    {
+        Debug.LogError($"[Ads] LevelPlay SDK init FAILED: {error}");
+        _sdkInitialized = false;
+    }
+
+    // ----------------------------------------------------
+    // Rewarded: +1 hint video
+    // ----------------------------------------------------
+    private void SetupRewardedAd()
+    {
+        string rewardedId = GetRewardedAdUnitIdForPlatform();
+        if (string.IsNullOrEmpty(rewardedId))
+        {
+            Debug.LogError("[Ads] Rewarded Ad Unit ID is empty for this platform – set it in SigilAdsManager.");
+            return;
+        }
+
+        _rewardedAd = new LevelPlayRewardedAd(rewardedId);
+
+        _rewardedAd.OnAdLoaded     += OnRewardedLoaded;
+        _rewardedAd.OnAdLoadFailed += OnRewardedLoadFailed;
+        _rewardedAd.OnAdClosed     += OnRewardedClosed;
+        _rewardedAd.OnAdRewarded   += OnRewardedRewarded;
+
+        Debug.Log($"[Ads] Loading first rewarded ad… (adUnitId={rewardedId})");
+        _rewardedAd.LoadAd();
+    }
+
+    private void OnRewardedLoaded(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log("[Ads] Rewarded ad loaded and ready.");
+    }
+
+    private void OnRewardedLoadFailed(LevelPlayAdError error)
+    {
+        Debug.LogWarning($"[Ads] Rewarded ad FAILED to load: {error}");
+    }
+
+    private void OnRewardedClosed(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log("[Ads] Rewarded ad closed – reloading.");
+        _rewardedAd?.LoadAd();
+    }
+
+    private void OnRewardedRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
+    {
+        Debug.Log("[Ads] Rewarded ad completed – granting hint.");
+        _pendingHintReward?.Invoke();
+        _pendingHintReward = null;
+    }
+
+    // ----------------------------------------------------
+    // Interstitial: show every N puzzle completions
+    // ----------------------------------------------------
+    private void SetupInterstitialAd()
+    {
+        string interstitialId = GetInterstitialAdUnitIdForPlatform();
+        if (string.IsNullOrEmpty(interstitialId))
+        {
+            Debug.LogWarning("[Ads] Interstitial Ad Unit ID is empty for this platform – interstitials disabled until set.");
+            return;
+        }
+
+        _interstitialAd = new LevelPlayInterstitialAd(interstitialId);
+
+        _interstitialAd.OnAdLoaded     += OnInterstitialLoaded;
+        _interstitialAd.OnAdLoadFailed += OnInterstitialLoadFailed;
+        _interstitialAd.OnAdClosed     += OnInterstitialClosed;
+
+        Debug.Log($"[Ads] Loading first interstitial ad… (adUnitId={interstitialId})");
+        _interstitialAd.LoadAd();
+    }
+
+    private void OnInterstitialLoaded(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log("[Ads] Interstitial loaded and ready.");
+    }
+
+    private void OnInterstitialLoadFailed(LevelPlayAdError error)
+    {
+        Debug.LogWarning($"[Ads] Interstitial FAILED to load: {error}");
+    }
+
+    private void OnInterstitialClosed(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log("[Ads] Interstitial closed – reloading.");
+        _interstitialAd?.LoadAd();
+    }
+#endif
+
+    // ----------------------------------------------------
+    // Public API used by your game
+    // ----------------------------------------------------
+
+    /// <summary>
+    /// Called from HintAdPopupController when the player confirms
+    /// they want to watch an ad for +1 hint.
+    /// </summary>
+    public void ShowRewardedForHint(Action onRewarded)
+    {
+#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+        Debug.Log("[Ads] Simulating rewarded hint in editor / non-mobile build.");
+        onRewarded?.Invoke();
 #else
-        Debug.Log("[Ads] Running in editor / non-mobile build – ads not initialized.");
+        if (!_sdkInitialized)
+        {
+            Debug.LogWarning("[Ads] LevelPlay not initialized yet – cannot show rewarded.");
+            return;
+        }
+
+        if (_rewardedAd == null)
+        {
+            Debug.LogWarning("[Ads] Rewarded ad object not created.");
+            return;
+        }
+
+        if (!_rewardedAd.IsAdReady())
+        {
+            Debug.LogWarning("[Ads] Rewarded ad not ready yet.");
+            return;
+        }
+
+        _pendingHintReward = onRewarded;
+        Debug.Log("[Ads] Showing rewarded ad for +1 hint.");
+        _rewardedAd.ShowAd();
 #endif
     }
 
-    private void OnApplicationPause(bool isPaused)
+    /// <summary>
+    /// Called from RunePuzzleManager when a puzzle is completed.
+    /// Counts completions even if the same puzzle is replayed.
+    /// Shows an interstitial every N completions.
+    /// </summary>
+    public void NotifyLevelCompleted()
     {
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        IronSource.Agent.onApplicationPause(isPaused);
+        _completedPuzzlesSinceLastInterstitial++;
+
+#if (UNITY_EDITOR || !(UNITY_IOS || UNITY_ANDROID))
+        if (_completedPuzzlesSinceLastInterstitial >= showInterstitialEveryNCompletions)
+        {
+            _completedPuzzlesSinceLastInterstitial = 0;
+            Debug.Log("[Ads] (Editor) Would show interstitial now (N completions reached).");
+        }
+#else
+        if (_completedPuzzlesSinceLastInterstitial < showInterstitialEveryNCompletions)
+            return;
+
+        _completedPuzzlesSinceLastInterstitial = 0;
+
+        if (!_sdkInitialized)
+        {
+            Debug.LogWarning("[Ads] LevelPlay not initialized – skipping interstitial.");
+            return;
+        }
+
+        if (_interstitialAd == null)
+        {
+            Debug.LogWarning("[Ads] Interstitial ad object not created (check ID / init).");
+            return;
+        }
+
+        if (!_interstitialAd.IsAdReady())
+        {
+            Debug.LogWarning("[Ads] Interstitial not ready yet – skipping and reloading.");
+            _interstitialAd.LoadAd();
+            return;
+        }
+
+        Debug.Log("[Ads] Showing interstitial (N puzzle completions reached).");
+        _interstitialAd.ShowAd();
 #endif
     }
 
     private void OnDestroy()
     {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        IronSourceInterstitialEvents.onAdReadyEvent    -= OnInterstitialReady;
-        IronSourceInterstitialEvents.onAdClosedEvent   -= OnInterstitialClosed;
-        IronSourceRewardedVideoEvents.onAdRewardedEvent -= OnRewardedVideoRewarded;
-#endif
-    }
-
-    // ----------------------------------------------------
-    // Interstitials
-    // ----------------------------------------------------
-
-    public void NotifyLevelCompleted()
-    {
-        _completedLevelsSinceLastAd++;
-
-        if (_completedLevelsSinceLastAd >= showInterstitialEveryNCompletions)
+        if (_rewardedAd != null)
         {
-            _completedLevelsSinceLastAd = 0;
-            ShowInterstitialIfReady();
+            _rewardedAd.OnAdLoaded     -= OnRewardedLoaded;
+            _rewardedAd.OnAdLoadFailed -= OnRewardedLoadFailed;
+            _rewardedAd.OnAdClosed     -= OnRewardedClosed;
+            _rewardedAd.OnAdRewarded   -= OnRewardedRewarded;
         }
-    }
 
-    public void ShowInterstitialIfReady()
-    {
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        if (IronSource.Agent.isInterstitialReady())
+        if (_interstitialAd != null)
         {
-            Debug.Log("[Ads] Showing interstitial.");
-            IronSource.Agent.showInterstitial();
+            _interstitialAd.OnAdLoaded     -= OnInterstitialLoaded;
+            _interstitialAd.OnAdLoadFailed -= OnInterstitialLoadFailed;
+            _interstitialAd.OnAdClosed     -= OnInterstitialClosed;
         }
-        else
-        {
-            Debug.Log("[Ads] Interstitial not ready yet.");
-        }
-#else
-        Debug.Log("[Ads] Simulating interstitial in editor / non-mobile build.");
+
+        LevelPlay.OnInitSuccess -= OnSdkInitSuccess;
+        LevelPlay.OnInitFailed  -= OnSdkInitFailed;
 #endif
     }
-
-    public void LoadInterstitial()
-    {
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        Debug.Log("[Ads] Requesting interstitial load.");
-        IronSource.Agent.loadInterstitial();
-#endif
-    }
-
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-    private void OnInterstitialReady(IronSourceAdInfo adInfo)
-    {
-        Debug.Log("[Ads] Interstitial ready.");
-    }
-
-    private void OnInterstitialClosed(IronSourceAdInfo adInfo)
-    {
-        Debug.Log("[Ads] Interstitial closed – loading next.");
-        LoadInterstitial();
-    }
-#endif
-
-    // ----------------------------------------------------
-    // Rewarded video for extra hints
-    // ----------------------------------------------------
-
-    public void ShowRewardedForHint(Action onRewarded)
-    {
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        if (IronSource.Agent.isRewardedVideoAvailable())
-        {
-            Debug.Log("[Ads] Showing rewarded video for extra hint.");
-            // remember what to do when the ad finishes
-            _pendingHintReward = onRewarded;
-            IronSource.Agent.showRewardedVideo("extra_hint");
-        }
-        else
-        {
-            Debug.Log("[Ads] Rewarded video not available.");
-        }
-#else
-        // EDITOR / non-mobile: just fake the ad instantly
-        Debug.Log("[Ads] Simulating rewarded hint in editor / non-mobile build.");
-        onRewarded?.Invoke();
-#endif
-    }
-
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-    // Called by IronSource when the user actually earns the reward
-    private void OnRewardedVideoRewarded(IronSourcePlacement placement, IronSourceAdInfo adInfo)
-    {
-        Debug.Log("[Ads] Rewarded video completed – granting hint.");
-        _pendingHintReward?.Invoke();
-        _pendingHintReward = null;
-    }
-#endif
 }

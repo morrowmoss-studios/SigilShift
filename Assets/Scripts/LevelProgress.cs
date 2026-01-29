@@ -12,7 +12,7 @@ public static class LevelProgress
     //  - UnlockUpTo() won't write anything to PlayerPrefs
     //
     // Set to FALSE for your real release build.
-    public static bool betaAllUnlocked = true;
+    public static bool betaAllUnlocked = false;
 
     // Default: only Level 1 is unlocked (in non-beta)
     public static int GetHighestUnlocked()
