@@ -1687,10 +1687,10 @@ RectTransform:
   - {fileID: 1512926363}
   m_Father: {fileID: 1331759103}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -18, y: 6785.9326}
-  m_SizeDelta: {x: 1465.3818, y: 7848.9326}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -18.5, y: 6785.9326}
+  m_SizeDelta: {x: -855.61816, y: 7848.9326}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &165359470
 MonoBehaviour:
@@ -4411,7 +4411,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1385188439}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.13543242
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -5874,8 +5874,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelSelectAutoScroll
   scrollRect: {fileID: 1225997056}
   content: {fileID: 165359469}
-  extraPaddingNormalized: 0.05
   centerOnTarget: 1
+  extraPaddingNormalized: 0.05
 --- !u!1001 &1229206068
 PrefabInstance:
   m_ObjectHideFlags: 0

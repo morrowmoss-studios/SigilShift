@@ -4,6 +4,8 @@ using UnityEngine.EventSystems;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 #endif
 
 public interface ISlidingPuzzle
@@ -75,6 +77,11 @@ public class RuneTile : MonoBehaviour
         _audio.playOnAwake = false;
         _audio.loop = false;
         _audio.spatialBlend = 0f; // 2D
+
+#if ENABLE_INPUT_SYSTEM
+        // THIS is the iOS/Android “tiles don’t click” fix when using the new Input System.
+        EnhancedTouchSupport.Enable();
+#endif
     }
 
     public void SetSlideTime(float seconds) => slideTime = Mathf.Max(0.01f, seconds);
@@ -119,22 +126,24 @@ public class RuneTile : MonoBehaviour
             }
         }
 
-        // ---------- UNIFIED POINTER (Input System + legacy fallback) ----------
+        // ---------- UNIFIED POINTER ----------
         bool pointerDownThis = false;
         bool pointerUpThis = false;
         bool pointerHeld = false;
         Vector2 pointerPos = Vector2.zero;
 
-        // --- New Input System first ---
+        // --- New Input System (EnhancedTouch first) ---
 #if ENABLE_INPUT_SYSTEM
-        if (Touchscreen.current != null)
+        if (Touch.activeTouches.Count > 0)
         {
-            var touch = Touchscreen.current.primaryTouch;
-            pointerPos = touch.position.ReadValue();
+            var touch = Touch.activeTouches[0];
+            pointerPos = touch.screenPosition;
 
-            if (touch.press.wasPressedThisFrame) pointerDownThis = true;
-            if (touch.press.isPressed)          pointerHeld = true;
-            if (touch.press.wasReleasedThisFrame) pointerUpThis = true;
+            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began) pointerDownThis = true;
+            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Moved ||
+                touch.phase == UnityEngine.InputSystem.TouchPhase.Stationary) pointerHeld = true;
+            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Ended ||
+                touch.phase == UnityEngine.InputSystem.TouchPhase.Canceled) pointerUpThis = true;
         }
         else if (Mouse.current != null)
         {
@@ -145,15 +154,16 @@ public class RuneTile : MonoBehaviour
         }
 #endif
 
-        // --- Legacy Input fallback (for Editor / iOS "Both" etc.) ---
+        // --- Legacy Input fallback ---
 #if ENABLE_LEGACY_INPUT_MANAGER
         if (!pointerDownThis && !pointerHeld && !pointerUpThis)
         {
             if (Input.touchCount > 0)
             {
-                Touch touch = Input.GetTouch(0);
-                pointerPos = touch.position;
-                switch (touch.phase)
+                TouchPhase phase = Input.GetTouch(0).phase;
+                pointerPos = Input.GetTouch(0).position;
+
+                switch (phase)
                 {
                     case TouchPhase.Began:
                         pointerDownThis = true;
@@ -200,9 +210,7 @@ public class RuneTile : MonoBehaviour
         if (!rightClick && Input.GetMouseButtonDown(1))
             rightClick = true;
         if (!shift)
-        {
             shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-        }
 #endif
 
         // ----- explicit rotate via right-click or Shift+Click -----
@@ -221,8 +229,7 @@ public class RuneTile : MonoBehaviour
 #endif
 
 #if ENABLE_LEGACY_INPUT_MANAGER
-            // Legacy right-click path (if still enabled)
-            if (allowExplicitRotate && !rightClick && Input.GetMouseButtonDown(1))
+            if (allowExplicitRotate && Input.GetMouseButtonDown(1))
             {
                 if (PointerOverSelf(Input.mousePosition))
                 {
@@ -261,26 +268,24 @@ public class RuneTile : MonoBehaviour
 
         if (pointerUpThis)
         {
-            // If we released over UI (like the Cancel button), do NOT treat it as a tile click
+            // IMPORTANT: Don’t click tiles when releasing over UI (popup buttons etc.)
             if (!_longPressTriggered && !IsPointerOverUI() && PointerOverSelf(pointerPos))
             {
                 TryHandleClickAtScreenPos(pointerPos);
             }
             _pointerDown = false;
         }
-
     }
 
-    // We keep this so nothing else wired to OnMouseDown breaks, but it does nothing
-    void OnMouseDown() { /* handled centrally in Update */ }
+    // Keep so nothing else breaks, but we handle input centrally in Update
+    void OnMouseDown() { }
 
-    // ---- Single guarded click handler ----
     void TryHandleClickAtScreenPos(Vector2 screenPos)
     {
         if (Time.frameCount == _lastClickFrame) return;
         _lastClickFrame = Time.frameCount;
 
-        // If the board is input-locked (popup / ad flow), ignore clicks.
+        // If board input is locked (popup/ad flow), ignore
         if (manager is RunePuzzleManager rpm && rpm.inputLocked)
             return;
 
@@ -300,7 +305,6 @@ public class RuneTile : MonoBehaviour
         }
     }
 
-    // ---- SFX helper ----
     void PlayTap()
     {
         if (!tapClip) return;
@@ -321,8 +325,6 @@ public class RuneTile : MonoBehaviour
 
     public void RotateOnce()
     {
-        Debug.Log($"[RuneTile] RotateOnce CALLED on {name} | _maxSteps={_maxSteps} | beforeSteps={rotationSteps}");
-
         if (_maxSteps <= 1) return;
         rotationSteps = (rotationSteps + 1) % _maxSteps;
         ApplyRotationVisual();
@@ -348,22 +350,13 @@ public class RuneTile : MonoBehaviour
 
     void TryExplicitRotate()
     {
-        Debug.Log($"[RuneTile] TryExplicitRotate on {name} | allowExplicitRotate={allowExplicitRotate}");
-
         if (!allowExplicitRotate) return;
-        if (manager == null)
-        {
-            Debug.Log($"[RuneTile] manager NULL on {name} -> NO rotate");
-            return;
-        }
+        if (manager == null) return;
 
         bool enabled = GetRotationEnabledFromManager();
-        Debug.Log($"[RuneTile] manager says rotationEnabled={enabled} | MaxRotationSteps={MaxRotationSteps}");
-
         if (!enabled) return;
         if (MaxRotationSteps <= 1) return;
 
-        Debug.Log($"[RuneTile] EXPLICIT ROTATE FIRED on {name}");
         RotateOnce();
         manager?.NotifyTileRotated(this);
     }
@@ -374,10 +367,12 @@ public class RuneTile : MonoBehaviour
         {
             var m = manager as MonoBehaviour;
             if (!m) return false;
+
             var fi = m.GetType().GetField("rotationEnabled",
                 System.Reflection.BindingFlags.Public |
                 System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
+
             if (fi != null && fi.FieldType == typeof(bool))
                 return (bool)fi.GetValue(m);
         }
@@ -396,13 +391,22 @@ public class RuneTile : MonoBehaviour
         var hit = Physics2D.OverlapPoint(new Vector2(wp.x, wp.y));
         return hit != null && hit.gameObject == gameObject;
     }
-    
+
     bool IsPointerOverUI()
     {
         if (EventSystem.current == null)
             return false;
 
+#if ENABLE_INPUT_SYSTEM
+        // Correct UI blocking for touch
+        if (Touch.activeTouches.Count > 0)
+        {
+            var t = Touch.activeTouches[0];
+            return EventSystem.current.IsPointerOverGameObject(t.finger.index);
+        }
+#endif
+
+        // Mouse/editor fallback
         return EventSystem.current.IsPointerOverGameObject();
     }
-
 }

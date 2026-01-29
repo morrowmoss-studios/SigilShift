@@ -6,23 +6,34 @@ public class LevelSelectAutoScroll : MonoBehaviour
 {
     [Header("Hook these up")]
     [SerializeField] private ScrollRect scrollRect;
-    [SerializeField] private RectTransform content; // the content under the ScrollRect
+    [SerializeField] private RectTransform content;
 
     [Header("Optional tuning")]
-    [SerializeField] private float extraPaddingNormalized = 0.05f; // keeps it from sitting exactly at edge
     [SerializeField] private bool centerOnTarget = true;
+    [SerializeField, Range(0f, 1f)] private float extraPaddingNormalized = 0.05f;
 
     private IEnumerator Start()
     {
-        // Wait a couple frames so layouts finish (VERY important)
+        // Let UI layout settle
         yield return null;
+        Canvas.ForceUpdateCanvases();
         yield return null;
+        Canvas.ForceUpdateCanvases();
 
         int highest = LevelProgress.GetHighestUnlocked();
+        Debug.Log($"[LevelSelectAutoScroll] HighestUnlocked = {highest}");
 
-        // Find the LevelLockVisual for that level
+        // Highest 1 => go to TOP (in your setup TOP == 0)
+        if (highest <= 1)
+        {
+            SetScrollNormalized(0f);
+            yield break;
+        }
+
+        // Find the target LevelPlate by LevelLockVisual.levelIndex
         LevelLockVisual target = null;
         var all = content.GetComponentsInChildren<LevelLockVisual>(true);
+
         foreach (var v in all)
         {
             if (v.levelIndex == highest)
@@ -34,7 +45,8 @@ public class LevelSelectAutoScroll : MonoBehaviour
 
         if (target == null)
         {
-            Debug.LogWarning($"[LevelSelectAutoScroll] Couldn't find LevelLockVisual for level {highest}");
+            Debug.LogWarning($"[LevelSelectAutoScroll] Couldn't find LevelLockVisual for level {highest}. Going to top.");
+            SetScrollNormalized(0f);
             yield break;
         }
 
@@ -43,39 +55,37 @@ public class LevelSelectAutoScroll : MonoBehaviour
 
     private void ScrollTo(RectTransform target)
     {
-        // Convert target position into normalized scroll position.
-        // Works for vertical scrolling. If yours is horizontal, tell me and I’ll flip it.
-
         Canvas.ForceUpdateCanvases();
 
-        float contentHeight = content.rect.height;
-        float viewportHeight = scrollRect.viewport.rect.height;
+        var viewport = scrollRect.viewport;
 
-        if (contentHeight <= viewportHeight)
-        {
-            // nothing to scroll
-            return;
-        }
+        // Target center in viewport-local space
+        Vector3 targetWorld = target.TransformPoint(target.rect.center);
+        Vector3 viewportLocal = viewport.InverseTransformPoint(targetWorld);
 
-        // anchoredPosition.y is how far content is shifted; target anchoredPosition is inside content
-        float targetY = Mathf.Abs(target.anchoredPosition.y);
+        // Where do we want it in the viewport?
+        float desiredY = centerOnTarget ? 0f : (viewport.rect.height * 0.5f - (viewport.rect.height * extraPaddingNormalized));
 
-        float normalized = targetY / (contentHeight - viewportHeight);
+        // Positive delta => target is above desired => we need to scroll "up" (in your inverted setup, down is 1)
+        float deltaY = viewportLocal.y - desiredY;
 
-        if (centerOnTarget)
-        {
-            float halfViewport = viewportHeight * 0.5f;
-            normalized = (targetY - halfViewport) / (contentHeight - viewportHeight);
-        }
+        // Convert pixel delta into normalized delta.
+        // Scrollable height = content height - viewport height
+        float scrollable = Mathf.Max(1f, content.rect.height - viewport.rect.height);
+        float normalizedDelta = deltaY / scrollable;
 
-        normalized = Mathf.Clamp01(normalized);
+        // IMPORTANT: Your setup is inverted (0 = top, 1 = bottom), so we ADD the delta.
+        float newNorm = scrollRect.verticalNormalizedPosition + normalizedDelta;
 
-        // ScrollRect verticalNormalizedPosition is inverted (1 = top, 0 = bottom)
-        float v = 1f - normalized;
+        // Clamp and apply
+        SetScrollNormalized(newNorm);
+    }
 
-        // Apply padding
-        v = Mathf.Clamp01(v + extraPaddingNormalized);
-
-        scrollRect.verticalNormalizedPosition = v;
+    private void SetScrollNormalized(float value)
+    {
+        value = Mathf.Clamp01(value);
+        scrollRect.verticalNormalizedPosition = value;
+        Canvas.ForceUpdateCanvases();
+        Debug.Log($"[LevelSelectAutoScroll] Set verticalNormalizedPosition = {value:0.000}");
     }
 }

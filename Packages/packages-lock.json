@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.google.external-dependency-manager": {
+      "version": "https://github.com/googlesamples/unity-jar-resolver.git?path=upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "38f31affdc54bf7ed0ffb8b97f3444395912a398"
+    },
     "com.unity.2d.animation": {
       "version": "13.0.2",
       "depth": 1,
