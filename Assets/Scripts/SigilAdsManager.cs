@@ -7,7 +7,7 @@ public class SigilAdsManager : MonoBehaviour
 
     [Header("IronSource / LevelPlay")]
     [SerializeField] private string iOSAppKey = "24ca1a025";
-    [SerializeField] private string androidAppKey = "YOUR_ANDROID_APP_KEY_HERE";
+    [SerializeField] private string androidAppKey = "24ca1d9ad";
 
     // We remember what to do when the rewarded ad finishes
     private Action _pendingHintReward;
@@ -31,36 +31,37 @@ public class SigilAdsManager : MonoBehaviour
 
     private void Start()
     {
-#if UNITY_IOS && !UNITY_EDITOR
-        InitIronSource(iOSAppKey, "iOS");
-#elif UNITY_ANDROID && !UNITY_EDITOR
-        InitIronSource(androidAppKey, "Android");
-#else
-        Debug.Log("[Ads] Running in editor / non-mobile build – ads not initialized.");
-#endif
-    }
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
 
-    private void InitIronSource(string appKey, string platformLabel)
-    {
+        string appKey =
+#if UNITY_IOS
+            iOSAppKey;
+#else
+            androidAppKey;
+#endif
+
         if (string.IsNullOrEmpty(appKey))
         {
-            Debug.LogError($"[Ads] {platformLabel} app key is EMPTY – check SigilAdsManager inspector.");
+            Debug.LogError("[Ads] App key is EMPTY for this platform – check SigilAdsManager inspector.");
             return;
         }
 
-        Debug.Log($"[Ads] Initializing IronSource for {platformLabel} with appKey={appKey}");
+        Debug.Log($"[Ads] Initializing IronSource with appKey={appKey}");
         IronSource.Agent.init(appKey);
         IronSource.Agent.validateIntegration();    // optional but handy for debug
 
         // Interstitial events
-        IronSourceInterstitialEvents.onAdReadyEvent  += OnInterstitialReady;
-        IronSourceInterstitialEvents.onAdClosedEvent += OnInterstitialClosed;
+        IronSourceInterstitialEvents.onAdReadyEvent    += OnInterstitialReady;
+        IronSourceInterstitialEvents.onAdClosedEvent   += OnInterstitialClosed;
 
         // Rewarded video events
         IronSourceRewardedVideoEvents.onAdRewardedEvent += OnRewardedVideoRewarded;
 
         // Pre-load the first interstitial
         LoadInterstitial();
+#else
+        Debug.Log("[Ads] Running in editor / non-mobile build – ads not initialized.");
+#endif
     }
 
     private void OnApplicationPause(bool isPaused)
@@ -70,9 +71,30 @@ public class SigilAdsManager : MonoBehaviour
 #endif
     }
 
+    private void OnDestroy()
+    {
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+        IronSourceInterstitialEvents.onAdReadyEvent    -= OnInterstitialReady;
+        IronSourceInterstitialEvents.onAdClosedEvent   -= OnInterstitialClosed;
+        IronSourceRewardedVideoEvents.onAdRewardedEvent -= OnRewardedVideoRewarded;
+#endif
+    }
+
     // ----------------------------------------------------
     // Interstitials
     // ----------------------------------------------------
+
+    public void NotifyLevelCompleted()
+    {
+        _completedLevelsSinceLastAd++;
+
+        if (_completedLevelsSinceLastAd >= showInterstitialEveryNCompletions)
+        {
+            _completedLevelsSinceLastAd = 0;
+            ShowInterstitialIfReady();
+        }
+    }
+
     public void ShowInterstitialIfReady()
     {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
@@ -98,7 +120,7 @@ public class SigilAdsManager : MonoBehaviour
 #endif
     }
 
-#if (UNITY_IOS || UNITY_ANDROID)
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
     private void OnInterstitialReady(IronSourceAdInfo adInfo)
     {
         Debug.Log("[Ads] Interstitial ready.");
@@ -111,18 +133,10 @@ public class SigilAdsManager : MonoBehaviour
     }
 #endif
 
-    private void OnDestroy()
-    {
-#if (UNITY_IOS || UNITY_ANDROID)
-        IronSourceInterstitialEvents.onAdReadyEvent  -= OnInterstitialReady;
-        IronSourceInterstitialEvents.onAdClosedEvent -= OnInterstitialClosed;
-        IronSourceRewardedVideoEvents.onAdRewardedEvent -= OnRewardedVideoRewarded;
-#endif
-    }
-
     // ----------------------------------------------------
     // Rewarded video for extra hints
     // ----------------------------------------------------
+
     public void ShowRewardedForHint(Action onRewarded)
     {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
@@ -144,8 +158,8 @@ public class SigilAdsManager : MonoBehaviour
 #endif
     }
 
-#if (UNITY_IOS || UNITY_ANDROID)
-    // Called by LevelPlay when the user actually earns the reward
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+    // Called by IronSource when the user actually earns the reward
     private void OnRewardedVideoRewarded(IronSourcePlacement placement, IronSourceAdInfo adInfo)
     {
         Debug.Log("[Ads] Rewarded video completed – granting hint.");
@@ -153,18 +167,4 @@ public class SigilAdsManager : MonoBehaviour
         _pendingHintReward = null;
     }
 #endif
-
-    // ----------------------------------------------------
-    // Level completion hook (called from RunePuzzleManager)
-    // ----------------------------------------------------
-    public void NotifyLevelCompleted()
-    {
-        _completedLevelsSinceLastAd++;
-
-        if (_completedLevelsSinceLastAd >= showInterstitialEveryNCompletions)
-        {
-            _completedLevelsSinceLastAd = 0;
-            ShowInterstitialIfReady();
-        }
-    }
 }
