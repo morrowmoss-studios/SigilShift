@@ -31,6 +31,10 @@ public class SigilAdsManager : MonoBehaviour
     [Tooltip("Show an interstitial every N puzzle completions (not unique levels).")]
     [SerializeField] private int showInterstitialEveryNCompletions = 2;
 
+    [Header("LevelPlay Test Suite (DEV ONLY)")]
+    [Tooltip("Only works in DEVELOPMENT_BUILD. Never runs in a normal release build.")]
+    [SerializeField] private bool enableTestSuiteInDevBuild = false;
+
     private int _completedPuzzlesSinceLastInterstitial = 0;
 
     // we remember what to do when the rewarded ad actually pays out
@@ -77,6 +81,16 @@ public class SigilAdsManager : MonoBehaviour
             return;
         }
 
+        // IMPORTANT: Enable Test Suite metadata BEFORE init.
+        // Safety: this only runs in DEVELOPMENT_BUILD (never in real release).
+#if DEVELOPMENT_BUILD
+        if (enableTestSuiteInDevBuild)
+        {
+            Debug.Log("[Ads] Enabling LevelPlay Test Suite (DEV BUILD).");
+            LevelPlay.SetMetaData("is_test_suite", "enable");
+        }
+#endif
+
         LevelPlay.OnInitSuccess += OnSdkInitSuccess;
         LevelPlay.OnInitFailed  += OnSdkInitFailed;
 
@@ -118,6 +132,17 @@ public class SigilAdsManager : MonoBehaviour
     {
         Debug.Log("[Ads] LevelPlay SDK initialized successfully.");
         _sdkInitialized = true;
+
+        // Launch Test Suite AFTER init success.
+        // SAFETY: only in DEVELOPMENT_BUILD
+#if DEVELOPMENT_BUILD
+        if (enableTestSuiteInDevBuild)
+        {
+            Debug.Log("[Ads] Launching LevelPlay Test Suite (DEV BUILD).");
+            LevelPlay.LaunchTestSuite();
+            return; // IMPORTANT: do not load/show real ads when using Test Suite flow
+        }
+#endif
 
         SetupRewardedAd();
         SetupInterstitialAd();
