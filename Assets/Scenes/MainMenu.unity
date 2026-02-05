@@ -678,7 +678,6 @@ MonoBehaviour:
   interstitialAdUnitId_iOS: o2kmwaujgax8f26i
   interstitialAdUnitId_Android: s2g490vpjmvw9yo6
   showInterstitialEveryNCompletions: 2
-  enableTestSuiteInDevBuild: 1
 --- !u!4 &1709030558
 Transform:
   m_ObjectHideFlags: 0
