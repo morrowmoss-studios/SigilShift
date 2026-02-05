@@ -9,8 +9,8 @@ public class SigilAdsManager : MonoBehaviour
 {
     public static SigilAdsManager Instance { get; private set; }
 
-    // Same key as in SigilIAPManager
-    private const string RemoveAdsPrefsKey = SigilIAPManager.RemoveAdsPrefsKey;
+    // Same key as in SigilIAPManagerV2
+    private const string RemoveAdsPrefsKey = SigilIAPManagerV2.RemoveAdsPrefsKey;
 
     [Header("LevelPlay App Keys")]
     [SerializeField] private string iOSAppKey     = "24ca1a025";
@@ -330,7 +330,7 @@ public class SigilAdsManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by SigilIAPManager when the Remove Ads purchase succeeds
+    /// Called by SigilIAPManagerV2 when the Remove Ads purchase succeeds
     /// or is detected as already owned.
     /// </summary>
     public void OnAdsRemovedByPurchase()
