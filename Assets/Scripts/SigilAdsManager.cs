@@ -9,8 +9,11 @@ public class SigilAdsManager : MonoBehaviour
 {
     public static SigilAdsManager Instance { get; private set; }
 
+    // Same key as in SigilIAPManager
+    private const string RemoveAdsPrefsKey = SigilIAPManager.RemoveAdsPrefsKey;
+
     [Header("LevelPlay App Keys")]
-    [SerializeField] private string iOSAppKey = "24ca1a025";
+    [SerializeField] private string iOSAppKey     = "24ca1a025";
     [SerializeField] private string androidAppKey = "24ca1d9ad";
 
     [Header("Rewarded Ad Unit IDs (platform-specific)")]
@@ -33,8 +36,10 @@ public class SigilAdsManager : MonoBehaviour
 
     private int _completedPuzzlesSinceLastInterstitial = 0;
 
-    // we remember what to do when the rewarded ad actually pays out
+    // remember what to do when the rewarded ad actually pays out
     private Action _pendingHintReward;
+
+    public bool AdsDisabled { get; private set; }
 
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
     private bool _sdkInitialized;
@@ -42,33 +47,38 @@ public class SigilAdsManager : MonoBehaviour
     private LevelPlayInterstitialAd _interstitialAd;
 #endif
 
-    // ----------------------------------------------------
-    //  Singleton
-    // ----------------------------------------------------
     private void Awake()
     {
+        // Singleton
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning("[Ads] Duplicate SigilAdsManager found – destroying this one.");
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        Debug.Log("[Ads] SigilAdsManager Awake – instance set & DontDestroyOnLoad applied.");
+
+        // Load "remove ads" state
+        AdsDisabled = PlayerPrefs.GetInt(RemoveAdsPrefsKey, 0) == 1;
+        if (AdsDisabled)
+        {
+            Debug.Log("[Ads] Awake – RemoveAds flag found. Ads are disabled; SDK init will be skipped.");
+        }
     }
 
-    // ----------------------------------------------------
-    //  Startup
-    // ----------------------------------------------------
     private void Start()
     {
+        if (AdsDisabled)
+        {
+            Debug.Log("[Ads] Start – ads disabled, not initializing LevelPlay.");
+            return;
+        }
+
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        Debug.Log($"[Ads] Start() on platform={Application.platform}. Initializing LevelPlay…");
         InitLevelPlay();
 #else
-        Debug.Log("[Ads] Start() in Editor / non-mobile build – ads simulated (no real SDK init).");
+        Debug.Log("[Ads] Editor / non-mobile build – ads simulated.");
 #endif
     }
 
@@ -79,8 +89,6 @@ public class SigilAdsManager : MonoBehaviour
     private void InitLevelPlay()
     {
         string appKey = GetAppKeyForPlatform();
-        Debug.Log($"[Ads] InitLevelPlay() called. Platform={Application.platform}, appKey={appKey}");
-
         if (string.IsNullOrEmpty(appKey))
         {
             Debug.LogError("[Ads] App key is EMPTY for this platform – check SigilAdsManager inspector.");
@@ -100,7 +108,6 @@ public class SigilAdsManager : MonoBehaviour
             return iOSAppKey;
         if (Application.platform == RuntimePlatform.Android)
             return androidAppKey;
-
         return null;
     }
 
@@ -110,7 +117,6 @@ public class SigilAdsManager : MonoBehaviour
             return rewardedAdUnitId_iOS;
         if (Application.platform == RuntimePlatform.Android)
             return rewardedAdUnitId_Android;
-
         return null;
     }
 
@@ -120,7 +126,6 @@ public class SigilAdsManager : MonoBehaviour
             return interstitialAdUnitId_iOS;
         if (Application.platform == RuntimePlatform.Android)
             return interstitialAdUnitId_Android;
-
         return null;
     }
 
@@ -166,7 +171,7 @@ public class SigilAdsManager : MonoBehaviour
 
     private void OnRewardedLoaded(LevelPlayAdInfo adInfo)
     {
-        Debug.Log("[Ads] Rewarded ad loaded and ready. (OnRewardedLoaded)");
+        Debug.Log("[Ads] Rewarded ad loaded and ready.");
     }
 
     private void OnRewardedLoadFailed(LevelPlayAdError error)
@@ -176,13 +181,13 @@ public class SigilAdsManager : MonoBehaviour
 
     private void OnRewardedClosed(LevelPlayAdInfo adInfo)
     {
-        Debug.Log("[Ads] Rewarded ad closed – reloading. (OnRewardedClosed)");
+        Debug.Log("[Ads] Rewarded ad closed – reloading.");
         _rewardedAd?.LoadAd();
     }
 
     private void OnRewardedRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
     {
-        Debug.Log($"[Ads] Rewarded ad completed – granting hint. rewardName={reward?.Name}, amount={reward?.Amount}");
+        Debug.Log("[Ads] Rewarded ad completed – granting hint.");
         _pendingHintReward?.Invoke();
         _pendingHintReward = null;
     }
@@ -213,7 +218,7 @@ public class SigilAdsManager : MonoBehaviour
 
     private void OnInterstitialLoaded(LevelPlayAdInfo adInfo)
     {
-        Debug.Log("[Ads] Interstitial loaded and ready. (OnInterstitialLoaded)");
+        Debug.Log("[Ads] Interstitial loaded and ready.");
     }
 
     private void OnInterstitialLoadFailed(LevelPlayAdError error)
@@ -223,13 +228,13 @@ public class SigilAdsManager : MonoBehaviour
 
     private void OnInterstitialClosed(LevelPlayAdInfo adInfo)
     {
-        Debug.Log("[Ads] Interstitial closed – reloading. (OnInterstitialClosed)");
+        Debug.Log("[Ads] Interstitial closed – reloading.");
         _interstitialAd?.LoadAd();
     }
-#endif // mobile && !editor
+#endif // MOBILE + !EDITOR
 
     // ----------------------------------------------------
-    // Public API used by your game
+    // Public API used by the game
     // ----------------------------------------------------
 
     /// <summary>
@@ -238,48 +243,55 @@ public class SigilAdsManager : MonoBehaviour
     /// </summary>
     public void ShowRewardedForHint(Action onRewarded)
     {
-        Debug.Log("[Ads] ShowRewardedForHint() CALLED.");
+        // If user bought "Remove Ads", just grant the hint instantly.
+        if (AdsDisabled)
+        {
+            Debug.Log("[Ads] ShowRewardedForHint called but ads are disabled – granting hint with no ad.");
+            onRewarded?.Invoke();
+            return;
+        }
 
 #if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
-        Debug.Log("[Ads] Editor / non-mobile build – simulating rewarded hint immediately.");
+        Debug.Log("[Ads] (Editor / non-mobile) Simulating rewarded hint.");
         onRewarded?.Invoke();
 #else
         if (!_sdkInitialized)
         {
-            Debug.LogWarning("[Ads] ShowRewardedForHint: LevelPlay not initialized yet – cannot show rewarded.");
+            Debug.LogWarning("[Ads] LevelPlay not initialized yet – cannot show rewarded.");
             return;
         }
 
         if (_rewardedAd == null)
         {
-            Debug.LogWarning("[Ads] ShowRewardedForHint: Rewarded ad object not created (null).");
+            Debug.LogWarning("[Ads] Rewarded ad object not created.");
             return;
         }
 
-        bool ready = _rewardedAd.IsAdReady();
-        Debug.Log($"[Ads] ShowRewardedForHint: _rewardedAd.IsAdReady() = {ready}");
-
-        if (!ready)
+        if (!_rewardedAd.IsAdReady())
         {
-            Debug.LogWarning("[Ads] ShowRewardedForHint: Rewarded ad not ready yet.");
+            Debug.LogWarning("[Ads] Rewarded ad not ready yet.");
             return;
         }
 
         _pendingHintReward = onRewarded;
-        Debug.Log("[Ads] ShowRewardedForHint: Showing rewarded ad for +1 hint now.");
+        Debug.Log("[Ads] Showing rewarded ad for +1 hint.");
         _rewardedAd.ShowAd();
 #endif
     }
 
     /// <summary>
     /// Called from RunePuzzleManager when a puzzle is completed.
-    /// Counts completions even if the same puzzle is replayed.
     /// Shows an interstitial every N completions.
     /// </summary>
     public void NotifyLevelCompleted()
     {
+        if (AdsDisabled)
+        {
+            Debug.Log("[Ads] NotifyLevelCompleted – ads disabled, skipping interstitial logic.");
+            return;
+        }
+
         _completedPuzzlesSinceLastInterstitial++;
-        Debug.Log($"[Ads] NotifyLevelCompleted() called. Count since last interstitial = {_completedPuzzlesSinceLastInterstitial}");
 
 #if (UNITY_EDITOR || !(UNITY_IOS || UNITY_ANDROID))
         if (_completedPuzzlesSinceLastInterstitial >= showInterstitialEveryNCompletions)
@@ -289,49 +301,60 @@ public class SigilAdsManager : MonoBehaviour
         }
 #else
         if (_completedPuzzlesSinceLastInterstitial < showInterstitialEveryNCompletions)
-        {
-            Debug.Log($"[Ads] NotifyLevelCompleted: Not yet at threshold ({_completedPuzzlesSinceLastInterstitial}/{showInterstitialEveryNCompletions}).");
             return;
-        }
 
         _completedPuzzlesSinceLastInterstitial = 0;
-        Debug.Log("[Ads] NotifyLevelCompleted: Threshold reached – attempting to show interstitial.");
 
         if (!_sdkInitialized)
         {
-            Debug.LogWarning("[Ads] NotifyLevelCompleted: LevelPlay not initialized – skipping interstitial.");
+            Debug.LogWarning("[Ads] LevelPlay not initialized – skipping interstitial.");
             return;
         }
 
         if (_interstitialAd == null)
         {
-            Debug.LogWarning("[Ads] NotifyLevelCompleted: Interstitial ad object not created (null).");
+            Debug.LogWarning("[Ads] Interstitial ad object not created (check ID / init).");
             return;
         }
 
-        bool ready = _interstitialAd.IsAdReady();
-        Debug.Log($"[Ads] NotifyLevelCompleted: _interstitialAd.IsAdReady() = {ready}");
-
-        if (!ready)
+        if (!_interstitialAd.IsAdReady())
         {
-            Debug.LogWarning("[Ads] NotifyLevelCompleted: Interstitial not ready yet – skipping and reloading.");
+            Debug.LogWarning("[Ads] Interstitial not ready yet – skipping and reloading.");
             _interstitialAd.LoadAd();
             return;
         }
 
-        Debug.Log("[Ads] NotifyLevelCompleted: Showing interstitial (N puzzle completions reached).");
+        Debug.Log("[Ads] Showing interstitial (N puzzle completions reached).");
         _interstitialAd.ShowAd();
 #endif
     }
 
-    // ----------------------------------------------------
-    // Cleanup
-    // ----------------------------------------------------
+    /// <summary>
+    /// Called by SigilIAPManager when the Remove Ads purchase succeeds
+    /// or is detected as already owned.
+    /// </summary>
+    public void OnAdsRemovedByPurchase()
+    {
+        if (AdsDisabled)
+        {
+            Debug.Log("[Ads] OnAdsRemovedByPurchase called but AdsDisabled already true.");
+            return;
+        }
+
+        AdsDisabled = true;
+        Debug.Log("[Ads] OnAdsRemovedByPurchase – ads are now permanently disabled.");
+
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+        _pendingHintReward = null;
+        _rewardedAd        = null;
+        _interstitialAd    = null;
+        _sdkInitialized    = false;
+#endif
+    }
+
     private void OnDestroy()
     {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-        Debug.Log("[Ads] SigilAdsManager.OnDestroy – unsubscribing from events.");
-
         if (_rewardedAd != null)
         {
             _rewardedAd.OnAdLoaded     -= OnRewardedLoaded;
