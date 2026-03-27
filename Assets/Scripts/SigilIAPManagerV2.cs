@@ -21,6 +21,12 @@ public class SigilIAPManagerV2 : MonoBehaviour, IStoreListener
     /// </summary>
     public bool HasRemovedAds { get; private set; }
 
+    /// <summary>
+    /// Fired when Remove Ads is successfully purchased OR restored.
+    /// Subscribe to this to update UI, hide ads, show confirmation popups, etc.
+    /// </summary>
+    public event Action OnAdsRemoved;
+
     // ------------------------------------------------------------
     //  Singleton
     // ------------------------------------------------------------
@@ -104,7 +110,8 @@ public class SigilIAPManagerV2 : MonoBehaviour, IStoreListener
     }
 
     /// <summary>
-    /// iOS / macOS restore flow. On Android, Google auto-restores.
+    /// iOS / macOS restore flow. Called by your "Restore Purchases" button.
+    /// On Android, Google auto-restores — no button needed.
     /// </summary>
     public void RestorePurchases()
     {
@@ -118,11 +125,16 @@ public class SigilIAPManagerV2 : MonoBehaviour, IStoreListener
         Debug.Log("[IAP] Restoring purchases (Apple platforms).");
         var apple = storeExtensionProvider.GetExtension<IAppleExtensions>();
 
-        // IMPORTANT: your IAP version's RestoreTransactions expects Action<bool, string>
         apple.RestoreTransactions((result, message) =>
         {
             Debug.Log($"[IAP] RestorePurchases result: {result}, message={message}");
-            // Entitlements are still granted through ProcessPurchase when receipts are re-sent.
+            // If result is true and the product is owned, ProcessPurchase will fire
+            // automatically and handle the entitlement + OnAdsRemoved event.
+            // If result is true but nothing was restored, let the user know.
+            if (result && !HasRemovedAds)
+            {
+                Debug.Log("[IAP] Restore completed but no purchases found for this account.");
+            }
         });
 #else
         Debug.Log("[IAP] RestorePurchases is only supported on Apple platforms.");
@@ -169,11 +181,15 @@ public class SigilIAPManagerV2 : MonoBehaviour, IStoreListener
         if (string.Equals(args.purchasedProduct.definition.id, ProductId_RemoveAds,
                 StringComparison.Ordinal))
         {
-            Debug.Log("[IAP] Remove Ads purchase SUCCESS.");
+            Debug.Log("[IAP] Remove Ads purchase/restore SUCCESS.");
             HasRemovedAds = true;
 
             PlayerPrefs.SetInt(RemoveAdsPrefsKey, 1);
             PlayerPrefs.Save();
+
+            // Notify any subscribed UI — use this to show your popup,
+            // hide ad banners, update the settings menu, etc.
+            OnAdsRemoved?.Invoke();
 
             return PurchaseProcessingResult.Complete;
         }
