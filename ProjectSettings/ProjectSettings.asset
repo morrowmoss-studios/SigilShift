@@ -173,10 +173,10 @@ PlayerSettings:
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 2
+    iPhone: 3
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 10
+  AndroidBundleVersionCode: 11
   AndroidMinSdkVersion: 25
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 1
@@ -272,7 +272,7 @@ PlayerSettings:
   AndroidAllowedArchitectures: -1
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: /Users/zak/Desktop/MorrowMoss Studios/Unity KeyStores/user.keystore
+  AndroidKeystoreName: /Users/zak/Desktop/MorrowMoss Studios/Unity KeyStores/Sigilshift/user.keystore
   AndroidKeyaliasName: sigilshift_release
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0
