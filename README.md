@@ -1,6 +1,6 @@
-# SigilShift by MorrowMoss Studios
+# SigilShift by MorrowMoss Studios LTD
 
-© 2025 MorrowMoss Studios. All rights reserved.
+© 2025 MorrowMoss Studios LTD. All rights reserved.
 
 **SigilShift** is a cozy, fae-inspired puzzle game where players push mossy rune stones 
 onto glowing sigils. Every solved puzzle is a spark of ritual magic wrapped in 
@@ -9,7 +9,7 @@ chaos gremlin energy.
 ---
 
 ### 🪷 About
-SigilShift is part of our mission at **MorrowMoss Studios** to create 
+SigilShift is part of our mission at **MorrowMoss Studios LTD** to create 
 emotionally grounding, beautifully eerie spaces where mechanics and magic 
 collide — and where each small victory feels enchanted.
 
@@ -30,7 +30,7 @@ For inquiries, collaborations, or offerings to the moss gods:
 
 ### 🔥 Legal Disclaimer
 This software, including all code, assets, and related materials, is proprietary to 
-**MorrowMoss Studios** and pertains specifically to the project **SigilShift**.
+**MorrowMoss Studios LTD** and pertains specifically to the project **SigilShift**.
 
 Unauthorized copying, modification, distribution, or commercial use of this 
 software or any of its parts is strictly prohibited. Violators will be fed to the moss.
